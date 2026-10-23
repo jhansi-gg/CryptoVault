@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CryptoVault| Security Dashboard</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background: #050914;
+            color: #eef4ff;
+            min-height: 100vh;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 22px 6%;
+            border-bottom: 1px solid #1d3557;
+            background: #080f20;
+        }
+
+        .logo {
+            font-size: 23px;
+            font-weight: bold;
+            letter-spacing: 2px;
+        }
+
+        .logo span {
+            color: #36a3ff;
+        }
+
+        nav {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        a,
+        button {
+            color: #dceaff;
+            text-decoration: none;
+            border: 1px solid #29466e;
+            background: #101e36;
+            padding: 10px 14px;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        a:hover,
+        button:hover {
+            border-color: #36a3ff;
+            background: #142b4c;
+        }
+
+        main {
+            max-width: 1100px;
+            margin: auto;
+            padding: 38px 22px;
+        }
+
+        .eyebrow {
+            color: #36a3ff;
+            font-size: 12px;
+            letter-spacing: 2px;
+        }
+
+        h1 {
+            margin: 12px 0;
+            font-size: clamp(28px, 5vw, 40px);
+        }
+
+        .muted {
+            color: #9aabc5;
+            line-height: 1.7;
+        }
+
+        .banner {
+            margin: 28px 0;
+            padding: 22px;
+            border: 1px solid #245b75;
+            border-radius: 14px;
+            background: linear-gradient(110deg, #10263d, #0a1427);
+        }
+
+        .banner h2 {
+            font-size: 18px;
+            margin-bottom: 8px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin: 22px 0 32px;
+        }
+
+        .card {
+            background: #0b1425;
+            border: 1px solid #1e3453;
+            border-radius: 13px;
+            padding: 22px;
+        }
+
+        .card h3 {
+            font-size: 14px;
+            color: #b9cbe5;
+            margin-bottom: 14px;
+        }
+
+        .value {
+            font-size: 25px;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .blue {
+            color: #56b4ff;
+        }
+
+        .section {
+            margin: 30px 0 14px;
+            font-size: 21px;
+        }
+
+        .activity {
+            display: grid;
+            gap: 12px;
+        }
+
+        .activity-item {
+            padding: 16px;
+            border: 1px solid #1e3453;
+            background: #0b1425;
+            border-radius: 10px;
+        }
+
+        .activity-item strong {
+            display: block;
+            margin-bottom: 6px;
+        }
+
+        .notice {
+            font-size: 13px;
+            color: #9aabc5;
+            margin-top: 14px;
+            line-height: 1.6;
+        }
+
+        @media (max-width: 720px) {
+            header {
+                align-items: flex-start;
+                gap: 16px;
+                flex-direction: column;
+            }
+
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <div class="logo">CRYPTO<span>Vault</span></div>
+        <nav>
+            <a href="home.html">Home</a>
+            <a href="crypto.html">Encryption</a>
+            <a href="signature.html">Digital Signature</a>
+            <button onclick="logout()">Logout</button>
+        </nav>
+    </header>
+
+    <main>
+        <p class="eyebrow">SECURITY CENTER</p>
+        <h1>Security Dashboard</h1>
+        <p class="muted">Review your session and explore the security features of your secure communication platform.
+        </p>
+
+        <section class="banner">
+            <h2>🔐 Authentication Session</h2>
+            <p id="sessionStatus">Checking login session...</p>
+            <p class="notice">A signed-in session does not by itself guarantee that every part of a system is secure.
+            </p>
+        </section>
+
+        <h2 class="section">Security Overview</h2>
+        <section class="grid">
+            <article class="card">
+                <h3>AUTHENTICATION</h3>
+                <div class="value blue" id="authStatus">Checking...</div>
+                <p class="muted">Browser access token</p>
+            </article>
+            <article class="card">
+                <h3>ENCRYPTION</h3>
+                <div class="value blue">AES-GCM</div>
+                <p class="muted">Available on the encryption page</p>
+            </article>
+            <article class="card">
+                <h3>DIGITAL SIGNATURE</h3>
+                <div class="value blue">RSA-PSS</div>
+                <p class="muted">Available on the signature page</p>
+            </article>
+        </section>
+
+        <h2 class="section">Security Operations</h2>
+        <section class="activity">
+            <div class="activity-item">
+                <strong>🔒 Encrypt and Decrypt</strong>
+                <p class="muted">Convert plain text into ciphertext and decrypt it when authorized.</p>
+                <p style="margin-top:12px"><a href="crypto.html">Open Encryption</a></p>
+            </div>
+            <div class="activity-item">
+                <strong>✍️ Digital Signature</strong>
+                <p class="muted">Create signatures and verify message integrity and authenticity.</p>
+                <p style="margin-top:12px"><a href="signature.html">Open Digital Signature</a></p>
+            </div>
+            <div class="activity-item">
+                <strong>👤 Account Session</strong>
+                <p class="muted" id="accountInfo">Account information is loaded from this browser session.</p>
+                <p style="margin-top:12px"><a href="home.html">Return Home</a></p>
+            </div>
+        </section>
+
+        <p class="notice">Note: Operation counts and historical activity are not displayed because this version does not
+            yet retrieve an audit log from the backend.</p>
+    </main>
+
+    <script>
+        const token = localStorage.getItem("access_token");
+
+        if (!token) {
+            window.location.replace("index.html");
+        } else {
+            document.getElementById("authStatus").textContent = "Token present";
+            document.getElementById("sessionStatus").textContent =
+                "A login token is stored in this browser. Server-side validity has not yet been rechecked.";
+            const username = localStorage.getItem("username") || "User";
+            document.getElementById("accountInfo").textContent = "Signed in as: " + username;
+        }
+
+        function logout() {
+            localStorage.removeItem("access_token");
+            localStorage.removeItem("username");
+            localStorage.removeItem("email");
+            window.location.replace("index.html");
+        }
+    </script>
+</body>
+
+</html>

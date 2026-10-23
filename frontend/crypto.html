@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CryptoVault | Encrypt & Decrypt</title>
+
+    <style>
+        :root {
+            --bg: #07111F;
+            --card: #10243A;
+            --accent: #38BDF8;
+            --text: #F0F9FF;
+            --muted: #A6BDD1;
+            --border: #24415C;
+            --input: #0B1B2D;
+            --success: #4ADE80;
+            --error: #F87171;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            background:
+                radial-gradient(ellipse at top left, #123252 0%, transparent 45%),
+                radial-gradient(ellipse at bottom right, #0C2B43 0%, transparent 40%),
+                var(--bg);
+            color: var(--text);
+        }
+
+        .navbar {
+            min-height: 75px;
+            padding: 15px 5%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 15px;
+            border-bottom: 1px solid var(--border);
+            background: rgba(7, 17, 31, 0.9);
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            letter-spacing: 2px;
+            color: var(--text);
+        }
+
+        .logo span {
+            color: var(--accent);
+        }
+
+        .back-btn {
+            padding: 10px 16px;
+            background: var(--card);
+            color: var(--text);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: 0.25s;
+        }
+
+        .back-btn:hover {
+            background: var(--accent);
+            color: var(--bg);
+            border-color: var(--accent);
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: auto;
+            padding: 50px 30px;
+        }
+
+        .heading {
+            margin-bottom: 35px;
+        }
+
+        .heading small {
+            color: var(--accent);
+            letter-spacing: 2px;
+            font-size: 11px;
+            font-weight: bold;
+        }
+
+        .heading h1 {
+            margin-top: 12px;
+            font-size: 36px;
+            line-height: 1.3;
+        }
+
+        .heading h1 span {
+            border-bottom: 3px solid var(--accent);
+            padding-bottom: 5px;
+        }
+
+        .heading p {
+            margin-top: 18px;
+            color: var(--muted);
+            line-height: 1.7;
+            max-width: 700px;
+        }
+
+        .flow {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 40px;
+            flex-wrap: wrap;
+        }
+
+        .flow-box {
+            padding: 14px 20px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: var(--card);
+            font-size: 13px;
+            transition: 0.25s;
+        }
+
+        .flow-box:hover {
+            border-color: var(--accent);
+            box-shadow: 0 0 15px rgba(56, 189, 248, 0.12);
+        }
+
+        .arrow {
+            color: var(--accent);
+            font-size: 20px;
+        }
+
+        .panels {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 25px;
+        }
+
+        .panel {
+            min-width: 0;
+            background: rgba(16, 36, 58, 0.88);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 28px;
+            box-shadow: 0 12px 35px rgba(0, 0, 0, 0.15);
+        }
+
+        .panel h2 {
+            font-size: 19px;
+            margin-bottom: 10px;
+        }
+
+        .panel h2:first-letter {
+            color: var(--accent);
+        }
+
+        .panel-description {
+            color: var(--muted);
+            font-size: 12px;
+            margin-bottom: 22px;
+            line-height: 1.7;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 12px;
+            color: var(--text);
+            font-weight: bold;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 180px;
+            resize: vertical;
+            background: var(--input);
+            color: var(--text);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 14px;
+            outline: none;
+            font-size: 13px;
+            line-height: 1.6;
+            transition: border-color 0.25s, box-shadow 0.25s;
+        }
+
+        textarea::placeholder,
+        input::placeholder {
+            color: #7891A8;
+        }
+
+        textarea:focus,
+        input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.1);
+        }
+
+        .key-input {
+            margin-top: 18px;
+        }
+
+        input {
+            width: 100%;
+            padding: 13px;
+            background: var(--input);
+            color: var(--text);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            outline: none;
+            transition: border-color 0.25s, box-shadow 0.25s;
+        }
+
+        .button {
+            width: 100%;
+            margin-top: 18px;
+            padding: 14px;
+            background: var(--accent);
+            color: #38BDF8;
+            border: 1px solid var(--accent);
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.25s;
+        }
+
+        .button:hover {
+            background: #38BDF8;
+            transform: translateY(-1px);
+            box-shadow: 0 5px 18px rgba(56, 189, 248, 0.18);
+        }
+
+        .button:disabled {
+            opacity: 0.65;
+            cursor: wait;
+            transform: none;
+        }
+
+        .secondary-button {
+            width: 100%;
+            margin-top: 12px;
+            padding: 12px;
+            background: transparent;
+            color: var(--accent);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: 0.25s;
+        }
+
+        .secondary-button:hover {
+            background: var(--card);
+            border-color: var(--accent);
+        }
+
+        .result {
+            margin-top: 30px;
+            padding: 25px;
+            background: rgba(16, 36, 58, 0.88);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+        }
+
+        .result h2 {
+            font-size: 18px;
+            margin-bottom: 15px;
+        }
+
+        #resultText {
+            min-height: 120px;
+            padding: 15px;
+            background: var(--input);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+            font-size: 13px;
+            line-height: 1.7;
+        }
+
+        .message {
+            margin-top: 12px;
+            color: var(--muted);
+            font-size: 12px;
+            line-height: 1.6;
+        }
+
+        .message.success {
+            color: var(--success);
+        }
+
+        .message.error {
+            color: var(--error);
+        }
+
+        footer {
+            margin-top: 50px;
+            padding: 25px;
+            text-align: center;
+            border-top: 1px solid var(--border);
+            color: var(--muted);
+            font-size: 11px;
+            letter-spacing: 1px;
+        }
+
+        @media (max-width: 800px) {
+            .panels {
+                grid-template-columns: 1fr;
+            }
+
+            .navbar {
+                padding: 15px 20px;
+            }
+
+            .container {
+                padding: 35px 20px;
+            }
+
+            .heading h1 {
+                font-size: 29px;
+            }
+
+            .panel {
+                padding: 22px;
+            }
+        }
+
+        @media (max-width: 450px) {
+            .logo {
+                font-size: 19px;
+            }
+
+            .back-btn {
+                padding: 9px 11px;
+                font-size: 12px;
+            }
+
+            .flow {
+                gap: 9px;
+            }
+
+            .flow-box {
+                padding: 11px;
+                font-size: 12px;
+            }
+
+            .arrow {
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="navbar">
+        <div class="logo">CRYPTO<span>Vault</span></div>
+        <button class="back-btn" onclick="goBack()">← Dashboard</button>
+    </nav>
+
+    <main class="container">
+        <section class="heading">
+            <small>CRYPTOGRAPHIC OPERATIONS</small>
+            <h1>🔐 <span>Encrypt &amp; Decrypt</span></h1>
+            <p>
+                Secure your message by converting plain text into cipher text
+                and decrypting it when required.
+            </p>
+        </section>
+
+        <div class="flow">
+            <div class="flow-box">📝 Plain Text</div>
+            <div class="arrow">→</div>
+            <div class="flow-box">🔐 AES-GCM</div>
+            <div class="arrow">→</div>
+            <div class="flow-box">🔒 Cipher Text</div>
+            <div class="arrow">→</div>
+            <div class="flow-box">📝 Plain Text</div>
+        </div>
+
+        <section class="panels">
+            <div class="panel">
+                <h2>🔐 Encrypt Message</h2>
+                <p class="panel-description">
+                    Enter your plain text message and a secret key to
+                    generate encrypted cipher text.
+                </p>
+
+                <label for="plainText">Plain Text</label>
+                <textarea id="plainText" placeholder="Enter the message you want to encrypt..."></textarea>
+
+                <div class="key-input">
+                    <label for="encryptKey">Secret Key</label>
+                    <input type="password" id="encryptKey" placeholder="Enter encryption key"
+                        autocomplete="new-password">
+                </div>
+
+                <button class="button" id="encryptButton" onclick="encryptMessage()">
+                    🔐 Encrypt Message
+                </button>
+            </div>
+
+            <div class="panel">
+                <h2>🔓 Decrypt Message</h2>
+                <p class="panel-description">
+                    Enter cipher text and the correct secret key to recover
+                    the original message.
+                </p>
+
+                <label for="cipherText">Cipher Text</label>
+                <textarea id="cipherText" placeholder="Enter encrypted cipher text..."></textarea>
+
+                <div class="key-input">
+                    <label for="decryptKey">Secret Key</label>
+                    <input type="password" id="decryptKey" placeholder="Enter decryption key"
+                        autocomplete="new-password">
+                </div>
+
+                <button class="button" id="decryptButton" onclick="decryptMessage()">
+                    🔓 Decrypt Message
+                </button>
+            </div>
+        </section>
+
+        <section class="result">
+            <h2>📋 Operation Result</h2>
+            <div id="resultText">Your encryption or decryption result will appear here.</div>
+            <div id="message" class="message" role="status" aria-live="polite"></div>
+            <button class="secondary-button" onclick="clearAll()">Clear All</button>
+        </section>
+    </main>
+
+    <footer>CRYPTOValut • AES-GCM • SECURE COMMUNICATION</footer>
+
+    <script>
+        const API = "http://127.0.0.1:8000";
+        const token = localStorage.getItem("access_token");
+
+        if (!token) {
+            window.location.href = "index.html";
+        }
+
+        async function encryptMessage() {
+            const plainText = document.getElementById("plainText").value;
+            const key = document.getElementById("encryptKey").value;
+
+            if (!plainText.trim() || !key) {
+                showMessage("Please enter both plain text and secret key.", "error");
+                return;
+            }
+
+            const button = document.getElementById("encryptButton");
+            button.disabled = true;
+
+            try {
+                showMessage("Encrypting message...", "");
+
+                const response = await fetch(`${API}/encrypt`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": "Bearer " + token
+                    },
+                    body: JSON.stringify({
+                        plaintext: plainText,
+                        secret_key: key
+                    })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    showMessage(data.detail || "Encryption failed.", "error");
+                    return;
+                }
+
+                document.getElementById("cipherText").value = data.ciphertext;
+                document.getElementById("decryptKey").value = key;
+                document.getElementById("resultText").textContent =
+                    "Encrypted Cipher Text:\n\n" + data.ciphertext;
+
+                showMessage("✓ Encryption successful using AES-256-GCM.", "success");
+            } catch (error) {
+                console.error(error);
+                showMessage("Cannot connect to the encryption server. Check that your backend is running.", "error");
+            } finally {
+                button.disabled = false;
+            }
+        }
+
+        async function decryptMessage() {
+            const cipherText = document.getElementById("cipherText").value.trim();
+            const key = document.getElementById("decryptKey").value;
+
+            if (!cipherText || !key) {
+                showMessage("Please enter both cipher text and secret key.", "error");
+                return;
+            }
+
+            const button = document.getElementById("decryptButton");
+            button.disabled = true;
+
+            try {
+                showMessage("Decrypting message...", "");
+
+                const response = await fetch(`${API}/decrypt`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": "Bearer " + token
+                    },
+                    body: JSON.stringify({
+                        ciphertext: cipherText,
+                        secret_key: key
+                    })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    showMessage(data.detail || "Decryption failed. Check your cipher text and secret key.", "error");
+                    return;
+                }
+
+                document.getElementById("resultText").textContent =
+                    "Decrypted Plain Text:\n\n" + data.plaintext;
+
+                document.getElementById("plainText").value = data.plaintext;
+
+                showMessage("✓ Decryption successful using AES-256-GCM.", "success");
+            } catch (error) {
+                console.error(error);
+                showMessage("Cannot connect to the decryption server. Check that your backend is running.", "error");
+            } finally {
+                button.disabled = false;
+            }
+        }
+
+        function clearAll() {
+            document.getElementById("plainText").value = "";
+            document.getElementById("cipherText").value = "";
+            document.getElementById("encryptKey").value = "";
+            document.getElementById("decryptKey").value = "";
+            document.getElementById("resultText").textContent =
+                "Your encryption or decryption result will appear here.";
+            showMessage("", "");
+        }
+
+        function showMessage(text, type = "") {
+            const element = document.getElementById("message");
+            element.textContent = text;
+            element.className = "message" + (type ? " " + type : "");
+        }
+
+        function goBack() {
+            window.location.href = "home.html";
+        }
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CryptoVault| Dashboard</title>
+
+    <style>
+        :root {
+            --bg: #07111F;
+            --card: #10243A;
+            --accent: #38BDF8;
+            --text: #F0F9FF;
+            --muted: #A6BDD1;
+            --border: #24415C;
+            --surface: #0B1B2D;
+            --success: #4ADE80;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        header {
+            padding: 22px 7%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            border-bottom: 1px solid var(--border);
+            background: var(--surface);
+        }
+
+        .brand {
+            font-size: 25px;
+            font-weight: 800;
+            letter-spacing: 1px;
+        }
+
+        .brand span {
+            color: var(--accent);
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .user-name {
+            color: var(--muted);
+            font-size: 14px;
+        }
+
+        .logout-btn {
+            padding: 10px 16px;
+            color: var(--accent);
+            background: transparent;
+            border: 1px solid var(--accent);
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .logout-btn:hover {
+            color: var(--bg);
+            background: var(--accent);
+        }
+
+        .container {
+            width: min(1150px, 100%);
+            margin: auto;
+            padding: 48px 22px;
+        }
+
+        .hero {
+            margin-bottom: 36px;
+        }
+
+        .eyebrow {
+            color: var(--accent);
+            font-size: 12px;
+            font-weight: bold;
+            letter-spacing: 2px;
+            margin-bottom: 14px;
+        }
+
+        .hero h1 {
+            font-size: clamp(30px, 5vw, 44px);
+            line-height: 1.2;
+            margin-bottom: 14px;
+        }
+
+        .hero h1 span {
+            color: var(--accent);
+        }
+
+        .hero p {
+            max-width: 680px;
+            color: var(--muted);
+            font-size: 16px;
+            line-height: 1.8;
+        }
+
+        .section-title {
+            margin-bottom: 18px;
+            font-size: 21px;
+        }
+
+        .features {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 20px;
+        }
+
+        .feature-card {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            min-height: 230px;
+            padding: 24px;
+            border-radius: 14px;
+            border: 1px solid var(--border);
+            background: var(--card);
+            cursor: pointer;
+            transition: transform .2s, border-color .2s,
+                box-shadow .2s;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-4px);
+            border-color: var(--accent);
+            box-shadow: 0 10px 35px #02081280;
+        }
+
+        .feature-icon {
+            width: 52px;
+            height: 52px;
+            display: grid;
+            place-items: center;
+            border-radius: 12px;
+            color: var(--accent);
+            background: #38BDF81A;
+            border: 1px solid #38BDF84D;
+            font-size: 26px;
+            margin-bottom: 22px;
+        }
+
+        .feature-card h3 {
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+
+        .feature-card p {
+            color: var(--muted);
+            font-size: 14px;
+            line-height: 1.7;
+            margin-bottom: 20px;
+        }
+
+        .arrow {
+            color: var(--accent);
+            font-size: 13px;
+            font-weight: bold;
+            margin-top: auto;
+        }
+
+        .status-panel {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-top: 30px;
+            padding: 18px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            flex-shrink: 0;
+            border-radius: 50%;
+            background: var(--success);
+            box-shadow: 0 0 12px #4ADE8070;
+        }
+
+        .status-panel strong {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .status-panel p {
+            color: var(--muted);
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        footer {
+            border-top: 1px solid var(--border);
+            padding: 22px;
+            text-align: center;
+            color: var(--muted);
+            font-size: 12px;
+        }
+
+        @media (max-width: 900px) {
+            .features {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        @media (max-width: 600px) {
+            header {
+                padding: 18px;
+                align-items: flex-start;
+                flex-direction: column;
+            }
+
+            .header-actions {
+                width: 100%;
+                justify-content: space-between;
+            }
+
+            .container {
+                padding: 32px 16px;
+            }
+
+            .features {
+                grid-template-columns: 1fr;
+            }
+
+            .feature-card {
+                min-height: 200px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <div class="brand">CRYPTO<span>Vault</span></div>
+
+        <div class="header-actions">
+            <span class="user-name" id="welcomeUser">Welcome</span>
+            <button class="logout-btn" id="logoutBtn" type="button">
+                Sign Out ↗
+            </button>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="hero">
+            <div class="eyebrow">SECURE COMMUNICATION PLATFORM</div>
+            <h1>Welcome to <span>CryptoVault</span></h1>
+            <p>
+                Protect your digital communication with encryption,
+                decryption, digital signatures and secure messaging.
+                Choose a feature below to get started.
+            </p>
+        </section>
+
+        <h2 class="section-title">Your Security Workspace</h2>
+
+        <section class="features">
+            <div class="feature-card" role="link" tabindex="0" onclick="openFeature('crypto.html')"
+                onkeydown="handleCardKey(event, 'crypto.html')">
+                <div class="feature-icon">🔐</div>
+                <h3>Encrypt &amp; Decrypt</h3>
+                <p>
+                    Convert readable messages into ciphertext and
+                    decrypt them using your secret key.
+                </p>
+                <span class="arrow">Open Encryption →</span>
+            </div>
+
+            <div class="feature-card" role="link" tabindex="0" onclick="openFeature('signature.html')"
+                onkeydown="handleCardKey(event, 'signature.html')">
+                <div class="feature-icon">✍️</div>
+                <h3>Digital Signature</h3>
+                <p>
+                    Sign messages digitally and verify whether
+                    signed content has been changed.
+                </p>
+                <span class="arrow">Open Signatures →</span>
+            </div>
+
+            <div class="feature-card" role="link" tabindex="0" onclick="openFeature('security.html')"
+                onkeydown="handleCardKey(event, 'security.html')">
+                <div class="feature-icon">🛡️</div>
+                <h3>Security Dashboard</h3>
+                <p>
+                    Explore the security information and features
+                    available in your application.
+                </p>
+                <span class="arrow">View Security →</span>
+            </div>
+
+            <div class="feature-card" role="link" tabindex="0" onclick="openFeature('messages.html')"
+                onkeydown="handleCardKey(event, 'messages.html')">
+                <div class="feature-icon">💬</div>
+                <h3>Secure Messaging</h3>
+                <p>
+                    Send encrypted messages to registered users
+                    and decrypt messages you receive.
+                </p>
+                <span class="arrow">Open Messaging →</span>
+            </div>
+        </section>
+
+        <section class="status-panel">
+            <div class="status-dot"></div>
+            <div>
+                <strong>CryptoVault Workspace</strong>
+                <p>
+                    You are signed in. Keep your passwords and
+                    encryption keys private.
+                </p>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        CryptoVault· Cryptographic Techniques for Secure Communication
+    </footer>
+
+    <script>
+        const token = localStorage.getItem("access_token");
+
+        if (!token) {
+            window.location.replace("index.html");
+        }
+
+        const username = localStorage.getItem("username") || "User";
+        document.getElementById("welcomeUser").textContent =
+            "Welcome, " + username;
+
+        function openFeature(page) {
+            window.location.href = page;
+        }
+
+        function handleCardKey(event, page) {
+            if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                openFeature(page);
+            }
+        }
+
+        document.getElementById("logoutBtn").addEventListener("click", () => {
+            localStorage.removeItem("access_token");
+            localStorage.removeItem("username");
+            localStorage.removeItem("email");
+            window.location.replace("index.html");
+        });
+    </script>
+</body>
+
+</html>

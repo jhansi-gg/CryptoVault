@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CryptoVault | Secure Communication</title>
+
+
+    <div class="cryptovault-logo" aria-label="CryptoVault digital lock logo">
+        <svg viewBox="0 0 100 100" width="90" height="90" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <linearGradient id="cvBlue" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0%" stop-color="#38bdf8" />
+                    <stop offset="100%" stop-color="#2563eb" />
+                </linearGradient>
+            </defs>
+            <g fill="none" stroke="url(#cvBlue)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M32 44V31a18 18 0 0 1 36 0v13" />
+                <rect x="25" y="42" width="50" height="38" rx="8" fill="#172554" />
+                <path d="M75 51h10l6-6 M75 62h13 M75 72h9l7 7" />
+                <circle cx="92" cy="44" r="3" fill="#38bdf8" />
+                <circle cx="92" cy="62" r="3" fill="#38bdf8" />
+                <circle cx="92" cy="79" r="3" fill="#38bdf8" />
+            </g>
+            <circle cx="50" cy="59" r="5" fill="#38bdf8" />
+            <path d="M50 63v7" stroke="#38bdf8" stroke-width="4" stroke-linecap="round" />
+        </svg>
+    </div>
+
+
+    <style>
+        :root {
+            --bg: #07111F;
+            --card: #10243A;
+            --accent: #38BDF8;
+            --text: #F0F9FF;
+            --muted: #A6BDD1;
+            --border: #24415C;
+            --surface: #0B1B2D;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            background:
+                radial-gradient(circle at 15% 20%, #123454 0%, transparent 35%),
+                radial-gradient(circle at 85% 80%, #0C2B44 0%, transparent 35%),
+                var(--bg);
+            color: var(--text);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow-x: hidden;
+            padding: 20px;
+            position: relative;
+        }
+
+        body::before,
+        body::after {
+            content: "";
+            position: fixed;
+            pointer-events: none;
+            border: 1px solid rgba(56, 189, 248, 0.12);
+            border-radius: 50%;
+            z-index: 0;
+        }
+
+        body::before {
+            width: 600px;
+            height: 600px;
+            animation: rotate 30s linear infinite;
+        }
+
+        body::after {
+            width: 400px;
+            height: 400px;
+            border-color: rgba(56, 189, 248, 0.08);
+            animation: rotateReverse 22s linear infinite;
+        }
+
+        @keyframes rotate {
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        @keyframes rotateReverse {
+            from {
+                transform: rotate(360deg);
+            }
+
+            to {
+                transform: rotate(0deg);
+            }
+        }
+
+        .page {
+            width: 100%;
+            max-width: 1100px;
+            min-height: 650px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 40px;
+            padding: 35px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .left-section {
+            flex: 1;
+            min-width: 0;
+            padding: 20px;
+        }
+
+        .security-icon {
+            width: 76px;
+            height: 76px;
+            border: 1px solid var(--accent);
+            border-radius: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 36px;
+            margin-bottom: 26px;
+            background: #10243A;
+            box-shadow: 0 0 35px #38BDF81C;
+        }
+
+        .brand {
+            font-size: clamp(32px, 4vw, 48px);
+            font-weight: 800;
+            letter-spacing: 3px;
+            margin-bottom: 15px;
+        }
+
+        .brand span {
+            color: var(--accent);
+        }
+
+        .main-heading {
+            font-size: clamp(21px, 2.5vw, 27px);
+            font-weight: 600;
+            margin-bottom: 18px;
+            display: inline-block;
+            position: relative;
+        }
+
+        .main-heading::after {
+            content: "";
+            position: absolute;
+            left: 0;
+            bottom: -9px;
+            width: 65%;
+            height: 2px;
+            background: var(--accent);
+        }
+
+        .description {
+            max-width: 520px;
+            color: var(--muted);
+            line-height: 1.9;
+            font-size: 15px;
+            margin-top: 27px;
+        }
+
+        .security-points {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-top: 28px;
+        }
+
+        .security-point {
+            padding: 10px 13px;
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            color: var(--text);
+            font-size: 12px;
+            background: #466d9799;
+        }
+
+        .login-card {
+            width: 390px;
+            flex-shrink: 0;
+            padding: 36px;
+            background: rgba(16, 36, 58, 0.94);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            box-shadow: 0 24px 70px #00000050;
+            backdrop-filter: blur(15px);
+        }
+
+        .card-heading {
+            font-size: 27px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .card-heading span {
+            border-bottom: 2px solid var(--accent);
+            padding-bottom: 6px;
+        }
+
+        .card-subtitle {
+            color: var(--muted);
+            font-size: 13px;
+            line-height: 1.7;
+            margin-bottom: 28px;
+            margin-top: 10px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            color: var(--text);
+            font-size: 13px;
+            margin-bottom: 9px;
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        .input-icon {
+            position: absolute;
+            left: 13px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 15px;
+        }
+
+        input {
+            width: 100%;
+            padding: 14px 14px 14px 42px;
+            border-radius: 9px;
+            border: 1px solid var(--border);
+            background: var(--bg);
+            color: var(--text);
+            outline: none;
+            transition: border-color .2s, box-shadow .2s;
+        }
+
+        input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 15px #38BDF81C;
+        }
+
+        input::placeholder {
+            color: #829DB5;
+        }
+
+        .login-button {
+            width: 100%;
+            padding: 14px;
+            border: 1px solid var(--accent);
+            border-radius: 9px;
+            background: var(--accent);
+            color: var(--bg);
+            font-size: 14px;
+            font-weight: 800;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: .2s;
+            margin-top: 5px;
+        }
+
+        .login-button:hover {
+            background: #38BDF8;
+            border-color: #38BDF8;
+            transform: translateY(-1px);
+        }
+
+        .login-button:disabled {
+            opacity: .6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .message {
+            text-align: center;
+            margin-top: 15px;
+            font-size: 13px;
+            line-height: 1.6;
+            min-height: 18px;
+            overflow-wrap: anywhere;
+        }
+
+        .links {
+            margin-top: 25px;
+            text-align: center;
+            border-top: 1px solid var(--border);
+            padding-top: 20px;
+            line-height: 2;
+        }
+
+        .links a {
+            color: var(--muted);
+            text-decoration: none;
+            font-size: 13px;
+            transition: color .2s;
+        }
+
+        .links a:hover {
+            color: var(--accent);
+        }
+
+        .divider {
+            color: #59758F;
+            margin: 0 8px;
+        }
+
+        .encryption-label {
+            text-align: center;
+            margin-top: 24px;
+            color: var(--muted);
+            font-size: 10px;
+            letter-spacing: 1.5px;
+            line-height: 1.8;
+        }
+
+        @media (max-width: 850px) {
+            body {
+                overflow-y: auto;
+            }
+
+            .page {
+                flex-direction: column;
+                justify-content: center;
+                gap: 25px;
+                padding: 20px 10px;
+            }
+
+            .left-section {
+                width: 100%;
+                text-align: center;
+                padding: 15px;
+            }
+
+            .security-icon {
+                margin: 0 auto 20px;
+            }
+
+            .main-heading::after {
+                left: 17%;
+                width: 66%;
+            }
+
+            .description {
+                margin-left: auto;
+                margin-right: auto;
+            }
+
+            .security-points {
+                justify-content: center;
+            }
+
+            .login-card {
+                width: 100%;
+                max-width: 390px;
+            }
+        }
+
+        @media (max-width: 400px) {
+            .login-card {
+                padding: 25px 20px;
+            }
+
+            .brand {
+                letter-spacing: 1px;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+
+            *,
+            *::before,
+            *::after {
+                animation-duration: 0.01ms !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+
+        .cryptovault-logo {
+            width: 90px;
+            height: 90px;
+            margin: 0 auto 12px;
+        }
+
+        .cryptovault-logo svg {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+
+<body>
+    <main class="page">
+
+        <section class="left-section">
+            <div class="security-icon" aria-hidden="true">🔐</div>
+
+            <h1 class="brand">CRYPTO<span>Vault</span></h1>
+
+            <h2 class="main-heading">Secure Communication</h2>
+
+            <p class="description">
+                A cryptographic communication platform designed to
+                protect digital information using encryption,
+                authentication, hashing and digital signatures.
+            </p>
+
+            <div class="security-points">
+                <div class="security-point">🔑 AES-GCM</div>
+                <div class="security-point">🛡 RSA</div>
+                <div class="security-point"># SHA-256</div>
+                <div class="security-point">✍ Digital Signature</div>
+            </div>
+        </section>
+
+        <section class="login-card">
+            <h2 class="card-heading"><span>Sign In</span></h2>
+
+            <p class="card-subtitle">
+                Authenticate to access secure communication.
+            </p>
+
+            <form id="loginForm">
+                <div class="input-group">
+                    <label for="username">Username</label>
+                    <div class="input-wrapper">
+                        <span class="input-icon" aria-hidden="true">👤</span>
+                        <input type="text" id="username" name="username" placeholder="Enter username"
+                            autocomplete="username" required>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label for="password">Password</label>
+                    <div class="input-wrapper">
+                        <span class="input-icon" aria-hidden="true">🔑</span>
+                        <input type="password" id="password" name="password" placeholder="Enter password"
+                            autocomplete="current-password" required>
+                    </div>
+                </div>
+
+                <button type="submit" class="login-button" id="loginButton">
+                    SIGN IN →
+                </button>
+            </form>
+
+            <div id="message" class="message" role="status" aria-live="polite"></div>
+
+            <div class="links">
+                <a href="forgot-password.html">Forgot Password?</a>
+                <span class="divider">|</span>
+                <a href="signup.html">Create Account</a>
+            </div>
+
+            <div class="encryption-label">
+                SECURED · ENCRYPTED · AUTHENTICATED
+            </div>
+        </section>
+    </main>
+
+    <script>
+        const loginForm = document.getElementById("loginForm");
+        const message = document.getElementById("message");
+        const loginButton = document.getElementById("loginButton");
+
+        loginForm.addEventListener("submit", async function (event) {
+            event.preventDefault();
+
+            const username = document.getElementById("username").value.trim();
+            const password = document.getElementById("password").value;
+
+            message.style.color = "#A6BDD1";
+            message.textContent = "Authenticating...";
+            loginButton.disabled = true;
+
+            try {
+                const response = await fetch("http://127.0.0.1:8000/login", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        username: username,
+                        password: password
+                    })
+                });
+
+                const data = await response.json().catch(() => ({}));
+
+                if (!response.ok) {
+                    throw new Error(
+                        data.detail || data.message ||
+                        "Invalid username or password."
+                    );
+                }
+
+                if (!data.access_token) {
+                    throw new Error(
+                        "Login response did not contain an access token."
+                    );
+                }
+
+                localStorage.setItem("access_token", data.access_token);
+
+                if (data.username) {
+                    localStorage.setItem("username", data.username);
+                } else {
+                    localStorage.setItem("username", username);
+                }
+
+                if (data.email) {
+                    localStorage.setItem("email", data.email);
+                }
+
+                message.style.color = "#38BDF8";
+                message.textContent = "✓ Authentication successful.";
+
+                window.location.href = "home.html";
+
+            } catch (error) {
+                message.style.color = "#FDA4AF";
+                message.textContent =
+                    error.message === "Failed to fetch"
+                        ? "Backend connection failed. Make sure FastAPI is running."
+                        : error.message;
+
+                console.error("Login error:", error);
+            } finally {
+                loginButton.disabled = false;
+            }
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Account | CryptoVault</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #080b12;
+            color: #f5f7fb;
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 420px;
+            padding: 32px;
+            background: #111827;
+            border: 1px solid #263449;
+            border-radius: 16px;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #9ca9bb;
+            margin-bottom: 28px;
+        }
+
+        label {
+            display: block;
+            margin: 16px 0 8px;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #34445b;
+            background: #080b12;
+            color: white;
+            font-size: 15px;
+        }
+
+        button {
+            width: 100%;
+            margin-top: 24px;
+            padding: 13px;
+            border: none;
+            border-radius: 8px;
+            background: #2878f0;
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: wait;
+        }
+
+        #message {
+            margin-top: 16px;
+            text-align: center;
+            overflow-wrap: anywhere;
+        }
+
+        a {
+            color: #65a5ff;
+            text-decoration: none;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 22px;
+            color: #aab5c5;
+        }
+    </style>
+    ```
+
+</head>
+
+<body>
+    <main class="container">
+        <h1>Create Account</h1>
+        <p class="subtitle">Join CryptoVault Secure Communication</p>
+
+        ```
+        <form id="signupForm">
+            <label for="username">Username</label>
+            <input id="username" name="username" type="text" required minlength="3" autocomplete="username">
+
+            <label for="email">Email</label>
+            <input id="email" name="email" type="email" required autocomplete="email">
+
+            <label for="password">Password</label>
+            <input id="password" name="password" type="password" required minlength="8" autocomplete="new-password">
+
+            <button id="submitButton" type="submit">
+                Create Account
+            </button>
+        </form>
+
+        <p id="message" role="status"></p>
+
+        <p class="footer">
+            Already have an account?
+            <a href="index.html">Sign in</a>
+        </p>
+    </main>
+
+    <script>
+        const form = document.getElementById("signupForm");
+        const message = document.getElementById("message");
+        const submitButton = document.getElementById("submitButton");
+
+        form.addEventListener("submit", async function (event) {
+            event.preventDefault();
+
+            message.textContent = "";
+            submitButton.disabled = true;
+
+            const payload = {
+                username: document.getElementById("username").value.trim(),
+                email: document.getElementById("email").value.trim(),
+                password: document.getElementById("password").value
+            };
+
+            try {
+                const response = await fetch(
+                    "http://127.0.0.1:8000/signup",
+                    {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify(payload)
+                    }
+                );
+
+                const result = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(
+                        result.detail || "Account creation failed."
+                    );
+                }
+
+                message.style.color = "#4ade80";
+                message.textContent =
+                    result.message || "Account created successfully!";
+
+                form.reset();
+
+                setTimeout(() => {
+                    window.location.href = "index.html";
+                }, 1500);
+
+            } catch (error) {
+                message.style.color = "#f87171";
+                message.textContent =
+                    error.message === "Failed to fetch"
+                        ? "Cannot connect to the backend. Check that FastAPI is running."
+                        : error.message;
+            } finally {
+                submitButton.disabled = false;
+            }
+        });
+    </script>
+    ```
+
+</body>
+
+</html>

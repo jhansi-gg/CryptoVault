@@ -1,0 +1,310 @@
+```html
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Digital Signatures | CryptoVault</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #080b12;
+            color: #f5f7fb;
+            padding: 30px 16px;
+        }
+
+        .container {
+            max-width: 850px;
+            margin: auto;
+        }
+
+        .brand {
+            color: #70a5ff;
+            font-size: 22px;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            color: #70a5ff;
+        }
+
+        p {
+            color: #b9c3d4;
+            line-height: 1.6;
+        }
+
+        .card {
+            background: #111827;
+            border: 1px solid #29354a;
+            border-radius: 14px;
+            padding: 22px;
+            margin: 22px 0;
+        }
+
+        label {
+            display: block;
+            margin: 15px 0 8px;
+            font-weight: bold;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 110px;
+            padding: 12px;
+            background: #080b12;
+            color: white;
+            border: 1px solid #394761;
+            border-radius: 8px;
+            resize: vertical;
+        }
+
+        button {
+            margin-top: 14px;
+            padding: 12px 18px;
+            border: 0;
+            border-radius: 8px;
+            background: #3478f6;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #1e5ed0;
+        }
+
+        .secondary {
+            background: #334155;
+        }
+
+        .result {
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+            background: #080b12;
+            border: 1px solid #29354a;
+            padding: 12px;
+            border-radius: 8px;
+            min-height: 45px;
+            margin-top: 10px;
+        }
+
+        .status {
+            font-weight: bold;
+        }
+
+        .success {
+            color: #6ee7a0;
+        }
+
+        .error {
+            color: #ff9292;
+        }
+
+        a {
+            color: #8bb5ff;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+
+        <div class="brand">CryptoVault</div>
+
+        <a href="home.html">← Back to Dashboard</a>
+
+        <h1>Digital Signature</h1>
+        <p>
+            Sign a message with RSA and SHA-256, then verify its
+            integrity using the matching public key.
+        </p>
+
+        <div class="card">
+            <h2>1. Generate Signature</h2>
+
+            <label for="signMessage">Plain-text message</label>
+            <textarea id="signMessage" placeholder="Enter the message you want to sign..."></textarea>
+
+            <button id="signButton" onclick="generateSignature()">
+                Generate Signature
+            </button>
+
+            <p>Digital signature</p>
+            <div id="signatureOutput" class="result">Your signature will appear here.</div>
+            <button class="secondary" onclick="copyResult('signatureOutput')">
+                Copy Signature
+            </button>
+
+            <p>Public key</p>
+            <div id="publicKeyOutput" class="result">Your public key will appear here.</div>
+            <button class="secondary" onclick="copyResult('publicKeyOutput')">
+                Copy Public Key
+            </button>
+        </div>
+
+        <div class="card">
+            <h2>2. Verify Signature</h2>
+
+            <label for="verifyMessage">Message to verify</label>
+            <textarea id="verifyMessage" placeholder="Paste the original signed message..."></textarea>
+
+            <label for="verifySignature">Digital signature</label>
+            <textarea id="verifySignature" placeholder="Paste the generated signature..."></textarea>
+
+            <label for="verifyPublicKey">Public key</label>
+            <textarea id="verifyPublicKey" placeholder="Paste the matching public key..."></textarea>
+
+            <button id="verifyButton" onclick="verifySignature()">
+                Verify Signature
+            </button>
+
+            <p id="verificationStatus" class="status"></p>
+        </div>
+    </div>
+
+    <script>
+        const API = "http://127.0.0.1:8000";
+
+        function requireLogin() {
+            if (!localStorage.getItem("access_token")) {
+                window.location.replace("index.html");
+                return false;
+            }
+            return true;
+        }
+
+        async function generateSignature() {
+            if (!requireLogin()) return;
+
+            const message = document.getElementById("signMessage").value;
+            const button = document.getElementById("signButton");
+
+            if (!message.trim()) {
+                alert("Please enter a message first.");
+                return;
+            }
+
+            button.disabled = true;
+            button.textContent = "Generating...";
+
+            try {
+                const response = await fetch(`${API}/signature/sign`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": "Bearer " +
+                            localStorage.getItem("access_token")
+                    },
+                    body: JSON.stringify({ message })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.detail || data.message || "Signing failed.");
+                }
+
+                document.getElementById("signatureOutput").textContent =
+                    data.signature;
+
+                document.getElementById("publicKeyOutput").textContent =
+                    data.public_key;
+
+                document.getElementById("verifyMessage").value = message;
+                document.getElementById("verifySignature").value =
+                    data.signature;
+                document.getElementById("verifyPublicKey").value =
+                    data.public_key;
+
+                document.getElementById("verificationStatus").textContent = "";
+            } catch (error) {
+                alert("Could not generate signature: " + error.message);
+            } finally {
+                button.disabled = false;
+                button.textContent = "Generate Signature";
+            }
+        }
+
+        async function verifySignature() {
+            if (!requireLogin()) return;
+
+            const message = document.getElementById("verifyMessage").value;
+            const signature = document.getElementById("verifySignature").value.trim();
+            const public_key = document.getElementById("verifyPublicKey").value.trim();
+            const status = document.getElementById("verificationStatus");
+            const button = document.getElementById("verifyButton");
+
+            status.textContent = "";
+            status.className = "status";
+
+            if (!message || !signature || !public_key) {
+                status.textContent =
+                    "Please provide the message, signature, and public key.";
+                status.classList.add("error");
+                return;
+            }
+
+            button.disabled = true;
+            button.textContent = "Verifying...";
+
+            try {
+                const response = await fetch(`${API}/signature/verify`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": "Bearer " +
+                            localStorage.getItem("access_token")
+                    },
+                    body: JSON.stringify({
+                        message,
+                        signature,
+                        public_key
+                    })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(
+                        data.detail || data.message || "Verification failed."
+                    );
+                }
+
+                status.textContent = data.message;
+                status.classList.add(data.valid ? "success" : "error");
+            } catch (error) {
+                status.textContent = "Could not verify: " + error.message;
+                status.classList.add("error");
+            } finally {
+                button.disabled = false;
+                button.textContent = "Verify Signature";
+            }
+        }
+
+        async function copyResult(elementId) {
+            const value = document.getElementById(elementId).textContent;
+
+            if (!value || value.includes("will appear here")) {
+                alert("Generate a signature first.");
+                return;
+            }
+
+            try {
+                await navigator.clipboard.writeText(value);
+                alert("Copied successfully!");
+            } catch {
+                alert("Copy failed. Select and copy the text manually.");
+            }
+        }
+    </script>
+</body>
+
+</html>
+```
