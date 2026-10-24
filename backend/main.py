@@ -20,19 +20,19 @@ from datetime import datetime, timedelta, timezone
 from database import get_connection
 
 
-app = FastAPI()
+app = FastAPI(title="Crypto-Pro Secure Communication")
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://127.0.0.1:5500",
         "http://localhost:5500",
+        "https://cryptovault-frontend-7uuo.vercel.app",
     ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
-title="Crypto-Pro Secure Communication"
 
 
 # =========================================================
