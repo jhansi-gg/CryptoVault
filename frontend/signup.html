@@ -94,7 +94,7 @@
             color: #aab5c5;
         }
     </style>
-    ```
+
 
 </head>
 
@@ -103,7 +103,7 @@
         <h1>Create Account</h1>
         <p class="subtitle">Join CryptoVault Secure Communication</p>
 
-        ```
+
         <form id="signupForm">
             <label for="username">Username</label>
             <input id="username" name="username" type="text" required minlength="3" autocomplete="username">
@@ -146,7 +146,7 @@
 
             try {
                 const response = await fetch(
-                    "http://127.0.0.1:8000/signup",
+                    "https://cryptovault-mysv.onrender.com/signup",
                     {
                         method: "POST",
                         headers: {
@@ -185,7 +185,7 @@
             }
         });
     </script>
-    ```
+
 
 </body>
 
