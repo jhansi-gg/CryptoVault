@@ -17,8 +17,7 @@ import base64
 import os
 from datetime import datetime, timedelta, timezone
 
-from database import get_connection
-
+from database import get_connection, init_db
 
 app = FastAPI(title="Crypto-Pro Secure Communication")
 
@@ -80,7 +79,7 @@ def ensure_password_reset_table():
     finally:
         connection.close()
 
-
+init_db()
 ensure_password_reset_table()
 class ForgotPasswordRequest(BaseModel):
     email: str
