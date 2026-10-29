@@ -438,8 +438,11 @@
     <footer>CRYPTOValut • AES-GCM • SECURE COMMUNICATION</footer>
 
     <script>
-        const API = "http://127.0.0.1:8000";
-        const token = localStorage.getItem("access_token");
+        const API = "https://cryptovault-mysv.onrender.com";
+
+        function getToken() {
+            return localStorage.getItem("access_token");
+        }
 
         if (!token) {
             window.location.href = "index.html";
@@ -464,7 +467,7 @@
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
-                        "Authorization": "Bearer " + token
+                        "Authorization": "Bearer " + getToken()
                     },
                     body: JSON.stringify({
                         plaintext: plainText,
@@ -512,7 +515,7 @@
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
-                        "Authorization": "Bearer " + token
+                        "Authorization": "Bearer " + getToken()
                     },
                     body: JSON.stringify({
                         ciphertext: cipherText,
