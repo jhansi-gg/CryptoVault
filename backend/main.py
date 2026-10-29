@@ -1,25 +1,24 @@
-from fastapi.middleware.cors import CORSMiddleware
+
+import os
 import base64
-import secrets
 import secrets
 import hashlib
-from cryptography.hazmat.primitives.asymmetric import rsa, padding
-from cryptography.hazmat.primitives import hashes, serialization
-from pydantic import BaseModel
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi import FastAPI, Depends, HTTPException
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from pydantic import BaseModel
+from datetime import datetime, timedelta, timezone
+
+import jwt
 from argon2 import PasswordHasher
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
-import jwt
-import base64
-import os
-from datetime import datetime, timedelta, timezone
+from cryptography.hazmat.primitives.asymmetric import rsa, padding
+from cryptography.hazmat.primitives import hashes, serialization
+from fastapi import FastAPI, Depends, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from pydantic import BaseModel
 
 from database import get_connection, init_db
 
-app = FastAPI(title="Crypto-Pro Secure Communication")
+
+app = FastAPI(title="CryptoVault Secure Communication")
 
 app.add_middleware(
     CORSMiddleware,
@@ -33,22 +32,17 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
-# =========================================================
-# SECURITY CONFIGURATION
-# =========================================================
-
 password_hasher = PasswordHasher()
+SECRET_KEY = os.getenv("SECRET_KEY")
 
-SECRET_KEY = "crypto-pro-secret-key-change-this-later"
+if not SECRET_KEY:
+    raise RuntimeError("SECRET_KEY is not configured in the environment.")
+
 ALGORITHM = "HS256"
-
 security = HTTPBearer()
 
 
-# =========================================================
-# REQUEST MODELS
-# =========================================================
+# -------------------- REQUEST MODELS --------------------
 
 class SignupRequest(BaseModel):
     username: str
@@ -61,65 +55,15 @@ class LoginRequest(BaseModel):
     password: str
 
 
-def ensure_password_reset_table():
-    connection = get_connection()
-    try:
-        cursor = connection.cursor()
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS password_reset_tokens (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                user_id INTEGER NOT NULL,
-                token_hash TEXT UNIQUE NOT NULL,
-                expires_at TIMESTAMP NOT NULL,
-                used INTEGER DEFAULT 0,
-                FOREIGN KEY (user_id) REFERENCES users(id)
-            )
-        """)
-        connection.commit()
-    finally:
-        connection.close()
-
-init_db()
-ensure_password_reset_table()
 class ForgotPasswordRequest(BaseModel):
     email: str
-
-# =========================================================
-# MESSAGING DATABASE
-# =========================================================
-
-def ensure_messages_table():
-    connection = get_connection()
-
-    try:
-        cursor = connection.cursor()
-
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS messages (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                sender_id INTEGER NOT NULL,
-                recipient_id INTEGER NOT NULL,
-                ciphertext TEXT NOT NULL,
-                signature TEXT,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                read_at TIMESTAMP,
-                FOREIGN KEY (sender_id) REFERENCES users(id),
-                FOREIGN KEY (recipient_id) REFERENCES users(id)
-            )
-        """)
-
-        connection.commit()
-
-    finally:
-        connection.close()
-
-
-ensure_messages_table()
 
 
 class ResetPasswordRequest(BaseModel):
     token: str
     new_password: str
+
+
 class SignatureRequest(BaseModel):
     message: str
 
@@ -134,6 +78,7 @@ class EncryptionRequest(BaseModel):
     plaintext: str
     secret_key: str
 
+
 class DecryptionRequest(BaseModel):
     ciphertext: str
     secret_key: str
@@ -145,420 +90,242 @@ class SendMessageRequest(BaseModel):
     signature: str = ""
 
 
-# =========================================================
-# HOME
-# =========================================================
+# -------------------- DATABASE INITIALIZATION --------------------
+
+init_db()
+
+
+# -------------------- HOME --------------------
 
 @app.get("/")
 def home():
-    return {
-        "message": "Crypto-Pro Secure Communication Backend is running!"
-    }
+    return {"message": "CryptoVault Secure Communication Backend is running!"}
 
 
-# =========================================================
-# SIGN UP
-# =========================================================
+# -------------------- SIGNUP --------------------
 
 @app.post("/signup")
 def signup(user: SignupRequest):
-
-    password_hash = password_hasher.hash(
-        user.password
-    )
-
+    password_hash = password_hasher.hash(user.password)
     connection = get_connection()
-    cursor = connection.cursor()
 
     try:
-
-        cursor.execute(
-            """
-            INSERT INTO users
-            (username, email, password_hash)
-            VALUES (?, ?, ?)
-            """,
-            (
-                user.username,
-                user.email,
-                password_hash
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                INSERT INTO users (username, email, password_hash)
+                VALUES (%s, %s, %s)
+                """,
+                (user.username, user.email, password_hash),
             )
-        )
 
         connection.commit()
 
         return {
             "message": "Account created successfully!",
             "username": user.username,
-            "email": user.email
+            "email": user.email,
         }
 
     except Exception as error:
-
         connection.rollback()
 
-        return {
-            "message": "Account creation failed",
-            "error": str(error)
-        }
+        # Do not expose database internals to clients.
+        error_code = getattr(error, "sqlstate", None)
+
+        if error_code == "23505":
+            raise HTTPException(
+                status_code=409,
+                detail="Username or email already exists.",
+            )
+
+        raise HTTPException(
+            status_code=400,
+            detail="Account creation failed. Check the supplied details.",
+        )
 
     finally:
-
         connection.close()
 
 
-# =========================================================
-# LOGIN
-# =========================================================
+# -------------------- LOGIN --------------------
 
 @app.post("/login")
 def login(user: LoginRequest):
-
     connection = get_connection()
-    cursor = connection.cursor()
 
     try:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "SELECT * FROM users WHERE username = %s",
+                (user.username,),
+            )
+            existing_user = cursor.fetchone()
 
-        cursor.execute(
-            """
-            SELECT *
-            FROM users
-            WHERE username = ?
-            """,
-            (user.username,)
-        )
-
-        existing_user = cursor.fetchone()
-
-        if existing_user is None:
-
-            return {
-                "message": "Invalid username or password"
-            }
-
-        try:
-
-            password_hasher.verify(
-                existing_user["password_hash"],
-                user.password
+        if not existing_user:
+            raise HTTPException(
+                status_code=401,
+                detail="Invalid username or password.",
             )
 
+        try:
+            password_hasher.verify(
+                existing_user["password_hash"],
+                user.password,
+            )
         except Exception:
-
-            return {
-                "message": "Invalid username or password"
-            }
-
-
-        # Create JWT token
+            raise HTTPException(
+                status_code=401,
+                detail="Invalid username or password.",
+            )
 
         token_data = {
-
-            "user_id":
-                existing_user["id"],
-
-            "username":
-                existing_user["username"],
-
-            "exp":
-                datetime.now(timezone.utc)
-                + timedelta(minutes=30)
+            "user_id": existing_user["id"],
+            "username": existing_user["username"],
+            "exp": datetime.now(timezone.utc) + timedelta(minutes=30),
         }
-
 
         access_token = jwt.encode(
             token_data,
             SECRET_KEY,
-            algorithm=ALGORITHM
+            algorithm=ALGORITHM,
         )
 
-
         return {
-
-            "message":
-                "Login successful!",
-
-            "access_token":
-                access_token,
-
-            "token_type":
-                "bearer",
-
-            "username":
-                existing_user["username"],
-
-            "email":
-                existing_user["email"]
+            "message": "Login successful!",
+            "access_token": access_token,
+            "token_type": "bearer",
+            "username": existing_user["username"],
+            "email": existing_user["email"],
         }
 
     finally:
-
         connection.close()
 
 
-# =========================================================
-# JWT AUTHENTICATION
-# =========================================================
+# -------------------- AUTHENTICATION --------------------
 
 def get_current_user(
-    credentials: HTTPAuthorizationCredentials =
-        Depends(security)
+    credentials: HTTPAuthorizationCredentials = Depends(security),
 ):
-
     token = credentials.credentials
 
     try:
-
         payload = jwt.decode(
             token,
             SECRET_KEY,
-            algorithms=[ALGORITHM]
+            algorithms=[ALGORITHM],
         )
 
-        return payload
-
-    except jwt.ExpiredSignatureError:
-
-        raise HTTPException(
-            status_code=401,
-            detail="Token has expired"
-        )
-
-    except jwt.InvalidTokenError:
-
-        raise HTTPException(
-            status_code=401,
-            detail="Invalid authentication token"
-        )
-
-
-# =========================================================
-# CURRENT USER
-# =========================================================
-
-@app.get("/me")
-def get_me(
-    current_user: dict =
-        Depends(get_current_user)
-):
-
-    return {
-
-        "message":
-            "Authenticated user",
-
-        "user_id":
-            current_user["user_id"],
-
-        "username":
-            current_user["username"]
-    }
-
-
-# =========================================================
-# AES-GCM KEY GENERATION
-# =========================================================
-
-def create_aes_key(secret_key: str):
-
-    """
-    Convert the user's secret key into
-    a valid 256-bit AES key.
-
-    SHA-256 produces exactly 32 bytes.
-    32 bytes = 256 bits.
-    """
-
-    import hashlib
-
-    return hashlib.sha256(
-        secret_key.encode("utf-8")
-    ).digest()
-
-
-# =========================================================
-# AES-GCM ENCRYPTION
-# =========================================================
-
-@app.post("/encrypt")
-def encrypt_message(
-    request: EncryptionRequest,
-    current_user: dict =
-        Depends(get_current_user)
-):
-
-    if not request.plaintext:
-
-        raise HTTPException(
-            status_code=400,
-            detail="Plain text cannot be empty"
-        )
-
-
-    if not request.secret_key:
-
-        raise HTTPException(
-            status_code=400,
-            detail="Secret key cannot be empty"
-        )
-
-
-    # Create AES-256 key
-
-    aes_key = create_aes_key(
-        request.secret_key
-    )
-
-
-    # Create random 12-byte nonce
-
-    nonce = os.urandom(12)
-
-
-    # Create AES-GCM cipher
-
-    aes_gcm = AESGCM(aes_key)
-
-
-    # Encrypt message
-
-    encrypted_data = aes_gcm.encrypt(
-        nonce,
-        request.plaintext.encode("utf-8"),
-        None
-    )
-
-
-    # Combine nonce + encrypted data
-
-    final_data = nonce + encrypted_data
-
-
-    # Convert binary data to Base64
-    # so it can safely travel through JSON
-
-    ciphertext = base64.b64encode(
-        final_data
-    ).decode("utf-8")
-
-
-    return {
-
-        "message":
-            "Encryption successful",
-
-        "algorithm":
-            "AES-256-GCM",
-
-        "ciphertext":
-            ciphertext,
-
-        "username":
-            current_user["username"]
-    }
-
-
-# =========================================================
-# AES-GCM DECRYPTION
-# =========================================================
-
-@app.post("/decrypt")
-def decrypt_message(
-    request: DecryptionRequest,
-    current_user: dict =
-        Depends(get_current_user)
-):
-
-    if not request.ciphertext:
-
-        raise HTTPException(
-            status_code=400,
-            detail="Cipher text cannot be empty"
-        )
-
-
-    if not request.secret_key:
-
-        raise HTTPException(
-            status_code=400,
-            detail="Secret key cannot be empty"
-        )
-
-
-    try:
-
-        # Decode Base64
-
-        encrypted_data = base64.b64decode(
-            request.ciphertext
-        )
-
-
-        # First 12 bytes are the nonce
-
-        nonce = encrypted_data[:12]
-
-
-        # Remaining bytes are encrypted data
-
-        ciphertext = encrypted_data[12:]
-
-
-        # Create same AES-256 key
-
-        aes_key = create_aes_key(
-            request.secret_key
-        )
-
-
-        # Create AES-GCM cipher
-
-        aes_gcm = AESGCM(aes_key)
-
-
-        # Decrypt
-
-        plaintext = aes_gcm.decrypt(
-            nonce,
-            ciphertext,
-            None
-        )
-
+        user_id = payload.get("user_id")
+        username = payload.get("username")
+
+        if user_id is None or username is None:
+            raise HTTPException(
+                status_code=401,
+                detail="Invalid authentication token.",
+            )
 
         return {
-
-            "message":
-                "Decryption successful",
-
-            "algorithm":
-                "AES-256-GCM",
-
-            "plaintext":
-                plaintext.decode("utf-8"),
-
-            "username":
-                current_user["username"]
+            "user_id": user_id,
+            "username": username,
         }
 
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(
+            status_code=401,
+            detail="Session expired. Please log in again.",
+        )
+    except jwt.InvalidTokenError:
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid authentication token.",
+        )
+
+
+@app.get("/me")
+def get_me(current_user=Depends(get_current_user)):
+    return {
+        "id": current_user["user_id"],
+        "username": current_user["username"],
+    }
+
+
+# -------------------- ENCRYPTION --------------------
+
+def create_aes_key(secret_key: str) -> bytes:
+    return hashlib.sha256(secret_key.encode("utf-8")).digest()
+
+
+@app.post("/encrypt")
+def encrypt_message(data: EncryptionRequest):
+    key = create_aes_key(data.secret_key)
+    nonce = secrets.token_bytes(12)
+    aes = AESGCM(key)
+
+    encrypted_data = aes.encrypt(
+        nonce,
+        data.plaintext.encode("utf-8"),
+        None,
+    )
+
+    ciphertext = base64.b64encode(
+        nonce + encrypted_data
+    ).decode("utf-8")
+
+    return {
+        "message": "Encryption successful!",
+        "ciphertext": ciphertext,
+    }
+
+
+@app.post("/decrypt")
+def decrypt_message(data: DecryptionRequest):
+    try:
+        raw_data = base64.b64decode(
+            data.ciphertext,
+            validate=True,
+        )
+
+        if len(raw_data) < 29:
+            raise ValueError("Invalid ciphertext.")
+
+        nonce = raw_data[:12]
+        encrypted_data = raw_data[12:]
+
+        key = create_aes_key(data.secret_key)
+        aes = AESGCM(key)
+
+        plaintext = aes.decrypt(
+            nonce,
+            encrypted_data,
+            None,
+        ).decode("utf-8")
+
+        return {
+            "message": "Decryption successful!",
+            "plaintext": plaintext,
+        }
 
     except Exception:
-
         raise HTTPException(
             status_code=400,
-            detail=
-                "Decryption failed. "
-                "Check the cipher text and secret key."
+            detail="Decryption failed. Check the ciphertext and secret key.",
         )
-    
+
+
+# -------------------- DIGITAL SIGNATURES --------------------
+
 @app.post("/signature/sign")
 def sign_message(
     data: SignatureRequest,
-    current_user: dict = Depends(get_current_user)
+    current_user=Depends(get_current_user),
 ):
-    # Generate an RSA key pair for this demonstration
+    # Demonstration-only key pair.
+    # A production application should securely store and reuse private keys.
     private_key = rsa.generate_private_key(
         public_exponent=65537,
-        key_size=2048
+        key_size=2048,
     )
 
     public_key = private_key.public_key()
@@ -567,27 +334,27 @@ def sign_message(
         data.message.encode("utf-8"),
         padding.PSS(
             mgf=padding.MGF1(hashes.SHA256()),
-            salt_length=padding.PSS.MAX_LENGTH
+            salt_length=padding.PSS.MAX_LENGTH,
         ),
-        hashes.SHA256()
+        hashes.SHA256(),
     )
 
-    public_pem = public_key.public_bytes(
+    public_key_pem = public_key.public_bytes(
         encoding=serialization.Encoding.PEM,
-        format=serialization.PublicFormat.SubjectPublicKeyInfo
+        format=serialization.PublicFormat.SubjectPublicKeyInfo,
     ).decode("utf-8")
 
     return {
-        "message": "Digital signature generated successfully",
+        "message": "Digital signature created successfully!",
         "signature": base64.b64encode(signature).decode("utf-8"),
-        "public_key": public_pem
+        "public_key": public_key_pem,
     }
 
 
 @app.post("/signature/verify")
 def verify_signature(
     data: VerifySignatureRequest,
-    current_user: dict = Depends(get_current_user)
+    current_user=Depends(get_current_user),
 ):
     try:
         public_key = serialization.load_pem_public_key(
@@ -596,7 +363,7 @@ def verify_signature(
 
         signature_bytes = base64.b64decode(
             data.signature,
-            validate=True
+            validate=True,
         )
 
         public_key.verify(
@@ -604,161 +371,187 @@ def verify_signature(
             data.message.encode("utf-8"),
             padding.PSS(
                 mgf=padding.MGF1(hashes.SHA256()),
-                salt_length=padding.PSS.MAX_LENGTH
+                salt_length=padding.PSS.MAX_LENGTH,
             ),
-            hashes.SHA256()
+            hashes.SHA256(),
         )
 
         return {
             "valid": True,
-            "message": "Signature is valid. The message has not been modified."
+            "message": "Signature is valid.",
         }
 
     except Exception:
         return {
             "valid": False,
-            "message": "Signature is invalid, or the message was modified."
+            "message": "Signature verification failed.",
         }
+
+
+# -------------------- FORGOT PASSWORD --------------------
+
 @app.post("/forgot-password")
 def forgot_password(data: ForgotPasswordRequest):
     connection = get_connection()
-    cursor = connection.cursor()
 
     try:
-        cursor.execute(
-            "SELECT id FROM users WHERE email = ?",
-            (data.email,)
-        )
-        user = cursor.fetchone()
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "SELECT id FROM users WHERE email = %s",
+                (data.email,),
+            )
+            user = cursor.fetchone()
 
-        # Use a generic response so the API does not reveal
-        # whether an email address has an account.
-        response = {
-            "message": "If the account exists, a reset request can be processed."
-        }
+            # Use the same public response whether the email exists or not.
+            if not user:
+                return {
+                    "message": (
+                        "If the account exists, password reset instructions "
+                        "will be provided."
+                    )
+                }
 
-        if user is None:
-            return response
+            reset_token = secrets.token_urlsafe(32)
+            token_hash = hashlib.sha256(
+                reset_token.encode("utf-8")
+            ).hexdigest()
 
-        token = secrets.token_urlsafe(32)
-        token_hash = hashlib.sha256(token.encode()).hexdigest()
-
-        cursor.execute(
-            """
-            INSERT INTO password_reset_tokens
-                (user_id, token_hash, expires_at, used)
-            VALUES (?, ?, datetime('now', '+15 minutes'), 0)
-            """,
-            (user["id"], token_hash)
-        )
+            cursor.execute(
+                """
+                INSERT INTO password_reset_tokens
+                    (user_id, token_hash, expires_at, used)
+                VALUES (
+                    %s, %s,
+                    CURRENT_TIMESTAMP + INTERVAL '15 minutes',
+                    0
+                )
+                """,
+                (user["id"], token_hash),
+            )
 
         connection.commit()
 
-        # Local student-demo only: show the token in the API response.
-        # In production, send a reset link to the verified email instead.
+        # Demo only: production should email the token using a secure
+        # email provider and should not return the token in the API response.
         return {
-            **response,
-            "demo_reset_token": token,
-            "demo_warning": "Development demo only. Never expose reset tokens in production."
+            "message": "Demo reset token created. It expires in 15 minutes.",
+            "demo_reset_token": reset_token,
         }
+
+    except Exception:
+        connection.rollback()
+        raise HTTPException(
+            status_code=500,
+            detail="Could not create a password reset token.",
+        )
 
     finally:
         connection.close()
-        
+
+
+# -------------------- RESET PASSWORD --------------------
+
 @app.post("/reset-password")
 def reset_password(data: ResetPasswordRequest):
+    if len(data.new_password) < 8:
+        raise HTTPException(
+            status_code=400,
+            detail="New password must contain at least 8 characters.",
+        )
+
+    token_hash = hashlib.sha256(
+        data.token.encode("utf-8")
+    ).hexdigest()
+
     connection = get_connection()
-    cursor = connection.cursor()
 
     try:
-        token_hash = hashlib.sha256(
-            data.token.encode()
-        ).hexdigest()
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT id, user_id
+                FROM password_reset_tokens
+                WHERE token_hash = %s
+                  AND used = 0
+                  AND expires_at > CURRENT_TIMESTAMP
+                """,
+                (token_hash,),
+            )
+            reset_record = cursor.fetchone()
 
-        cursor.execute(
-            """
-            SELECT id, user_id
-            FROM password_reset_tokens
-            WHERE token_hash = ?
-              AND used = 0
-              AND expires_at > datetime('now')
-            """,
-            (token_hash,)
-        )
-        reset_record = cursor.fetchone()
+            if not reset_record:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Invalid, expired, or already-used reset token.",
+                )
 
-        if reset_record is None:
-            raise HTTPException(
-                status_code=400,
-                detail="Invalid or expired reset token"
+            new_password_hash = password_hasher.hash(
+                data.new_password
             )
 
-        if len(data.new_password) < 8:
-            raise HTTPException(
-                status_code=400,
-                detail="Password must contain at least 8 characters"
+            cursor.execute(
+                """
+                UPDATE users
+                SET password_hash = %s
+                WHERE id = %s
+                """,
+                (new_password_hash, reset_record["user_id"]),
             )
 
-        new_password_hash = password_hasher.hash(
-            data.new_password
-        )
-
-        cursor.execute(
-            """
-            UPDATE users
-            SET password_hash = ?
-            WHERE id = ?
-            """,
-            (new_password_hash, reset_record["user_id"])
-        )
-
-        cursor.execute(
-            """
-            UPDATE password_reset_tokens
-            SET used = 1
-            WHERE id = ?
-            """,
-            (reset_record["id"],)
-        )
+            cursor.execute(
+                """
+                UPDATE password_reset_tokens
+                SET used = 1
+                WHERE id = %s
+                """,
+                (reset_record["id"],),
+            )
 
         connection.commit()
 
         return {
-            "message": "Password reset successful. Please sign in with your new password."
+            "message": "Password reset successful. Please log in again."
         }
+
+    except HTTPException:
+        connection.rollback()
+        raise
+
+    except Exception:
+        connection.rollback()
+        raise HTTPException(
+            status_code=500,
+            detail="Could not reset the password.",
+        )
 
     finally:
         connection.close()
-        # =========================================================
-# LIST USERS FOR MESSAGING
-# =========================================================
+
+
+# -------------------- LIST USERS --------------------
 
 @app.get("/users")
-def list_users(
-    current_user: dict = Depends(get_current_user)
-):
+def get_users(current_user=Depends(get_current_user)):
     connection = get_connection()
 
     try:
-        cursor = connection.cursor()
-
-        cursor.execute(
-            """
-            SELECT id, username
-            FROM users
-            WHERE id != ?
-            ORDER BY username
-            """,
-            (current_user["user_id"],)
-        )
-
-        users = cursor.fetchall()
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT id, username
+                FROM users
+                WHERE id != %s
+                ORDER BY username
+                """,
+                (current_user["user_id"],),
+            )
+            users = cursor.fetchall()
 
         return {
             "users": [
                 {
                     "id": user["id"],
-                    "username": user["username"]
+                    "username": user["username"],
                 }
                 for user in users
             ]
@@ -766,113 +559,129 @@ def list_users(
 
     finally:
         connection.close()
-        # =========================================================
-# SEND ENCRYPTED MESSAGE
-# =========================================================
+
+
+# -------------------- SEND MESSAGE --------------------
 
 @app.post("/messages/send")
 def send_message(
     data: SendMessageRequest,
-    current_user: dict = Depends(get_current_user)
+    current_user=Depends(get_current_user),
 ):
     if not data.ciphertext.strip():
         raise HTTPException(
             status_code=400,
-            detail="Cipher text cannot be empty"
+            detail="Ciphertext cannot be empty.",
         )
 
     connection = get_connection()
 
     try:
-        cursor = connection.cursor()
-
-        # Find the recipient
-        cursor.execute(
-            "SELECT id FROM users WHERE username = ?",
-            (data.recipient_username,)
-        )
-        recipient = cursor.fetchone()
-
-        if recipient is None:
-            raise HTTPException(
-                status_code=404,
-                detail="Recipient username not found"
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "SELECT id FROM users WHERE username = %s",
+                (data.recipient_username,),
             )
+            recipient = cursor.fetchone()
 
-        if recipient["id"] == current_user["user_id"]:
-            raise HTTPException(
-                status_code=400,
-                detail="You cannot send a message to yourself"
-            )
+            if not recipient:
+                raise HTTPException(
+                    status_code=404,
+                    detail="Recipient not found.",
+                )
 
-        # Store the encrypted message
-        cursor.execute(
-            """
-            INSERT INTO messages
-                (sender_id, recipient_id, ciphertext, signature)
-            VALUES (?, ?, ?, ?)
-            """,
-            (
-                current_user["user_id"],
-                recipient["id"],
-                data.ciphertext,
-                data.signature
+            if recipient["id"] == current_user["user_id"]:
+                raise HTTPException(
+                    status_code=400,
+                    detail="You cannot send a message to yourself.",
+                )
+
+            cursor.execute(
+                """
+                INSERT INTO messages
+                    (sender_id, recipient_id, ciphertext, signature)
+                VALUES (%s, %s, %s, %s)
+                """,
+                (
+                    current_user["user_id"],
+                    recipient["id"],
+                    data.ciphertext,
+                    data.signature,
+                ),
             )
-        )
 
         connection.commit()
 
         return {
-            "message": "Encrypted message sent successfully",
-            "recipient": data.recipient_username
+            "message": "Encrypted message sent successfully!",
+            "recipient": data.recipient_username,
         }
+
+    except HTTPException:
+        connection.rollback()
+        raise
+
+    except Exception:
+        connection.rollback()
+        raise HTTPException(
+            status_code=500,
+            detail="Could not send the message.",
+        )
 
     finally:
         connection.close()
-        # =========================================================
-# RECEIVE MESSAGES
-# =========================================================
+
+
+# -------------------- MESSAGE INBOX --------------------
 
 @app.get("/messages/inbox")
-def receive_messages(
-    current_user: dict = Depends(get_current_user)
-):
+def get_inbox(current_user=Depends(get_current_user)):
     connection = get_connection()
 
     try:
-        cursor = connection.cursor()
-
-        cursor.execute(
-            """
-            SELECT
-                messages.id,
-                sender.username AS sender_username,
-                messages.ciphertext,
-                messages.signature,
-                messages.created_at
-            FROM messages
-            JOIN users AS sender
-                ON messages.sender_id = sender.id
-            WHERE messages.recipient_id = ?
-            ORDER BY messages.created_at DESC
-            """,
-            (current_user["user_id"],)
-        )
-
-        rows = cursor.fetchall()
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT
+                    messages.id,
+                    sender.username AS sender_username,
+                    messages.ciphertext,
+                    messages.signature,
+                    messages.created_at
+                FROM messages
+                JOIN users AS sender
+                    ON messages.sender_id = sender.id
+                WHERE messages.recipient_id = %s
+                ORDER BY messages.created_at DESC
+                """,
+                (current_user["user_id"],),
+            )
+            messages = cursor.fetchall()
 
         return {
             "messages": [
                 {
-                    "id": row["id"],
-                    "sender": row["sender_username"],
-                    "ciphertext": row["ciphertext"],
-                    "signature": row["signature"],
-                    "created_at": row["created_at"]
+                    "id": message["id"],
+                    "sender_username": message["sender_username"],
+                    "ciphertext": message["ciphertext"],
+                    "signature": message["signature"],
+                    "created_at": message["created_at"],
                 }
-                for row in rows
+                for message in messages
             ]
         }
 
     finally:
         connection.close()
+@app.get("/debug/database")
+def debug_database():
+    with get_connection() as connection:
+        with connection.cursor() as cursor:
+            cursor.execute("""
+                SELECT
+                    current_database() AS database_name,
+                    current_schema() AS schema_name,
+                    to_regclass('public.users') AS users_table,
+                    (SELECT COUNT(*) FROM public.users) AS user_count
+            """)
+            return cursor.fetchone()

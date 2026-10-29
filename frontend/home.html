@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CryptoVault| Dashboard</title>
+    <title>CryptoVault | Dashboard</title>
 
     <style>
         :root {
@@ -47,7 +47,8 @@
             letter-spacing: 1px;
         }
 
-        .brand span {
+        .brand span,
+        .hero h1 span {
             color: var(--accent);
         }
 
@@ -99,10 +100,6 @@
             font-size: clamp(30px, 5vw, 44px);
             line-height: 1.2;
             margin-bottom: 14px;
-        }
-
-        .hero h1 span {
-            color: var(--accent);
         }
 
         .hero p {
@@ -331,19 +328,57 @@
     </main>
 
     <footer>
-        CryptoVault· Cryptographic Techniques for Secure Communication
+        CryptoVault · Cryptographic Techniques for Secure Communication
     </footer>
 
     <script>
-        const token = localStorage.getItem("access_token");
+        const API_BASE = "https://cryptovault-mysv.onrender.com";
 
-        if (!token) {
+        function logout() {
+            localStorage.removeItem("access_token");
+            localStorage.removeItem("username");
+            localStorage.removeItem("email");
             window.location.replace("index.html");
         }
 
-        const username = localStorage.getItem("username") || "User";
-        document.getElementById("welcomeUser").textContent =
-            "Welcome, " + username;
+        async function checkSession() {
+            const token = localStorage.getItem("access_token");
+
+            if (!token) {
+                logout();
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/me`, {
+                    method: "GET",
+                    headers: {
+                        "Authorization": `Bearer ${token}`
+                    }
+                });
+
+                if (response.status === 401 || response.status === 403) {
+                    logout();
+                    return;
+                }
+
+                if (!response.ok) {
+                    document.getElementById("welcomeUser").textContent =
+                        "Unable to verify session. Please try again.";
+                    return;
+                }
+
+                const username = localStorage.getItem("username") || "User";
+
+                document.getElementById("welcomeUser").textContent =
+                    "Welcome, " + username;
+
+            } catch (error) {
+                document.getElementById("welcomeUser").textContent =
+                    "Unable to connect. Check your internet connection.";
+                console.error("Session check failed:", error);
+            }
+        }
 
         function openFeature(page) {
             window.location.href = page;
@@ -356,12 +391,10 @@
             }
         }
 
-        document.getElementById("logoutBtn").addEventListener("click", () => {
-            localStorage.removeItem("access_token");
-            localStorage.removeItem("username");
-            localStorage.removeItem("email");
-            window.location.replace("index.html");
-        });
+        document.getElementById("logoutBtn")
+            .addEventListener("click", logout);
+
+        checkSession();
     </script>
 </body>
 
