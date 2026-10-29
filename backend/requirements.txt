@@ -6,3 +6,4 @@ argon2-cffi
 python-multipart
 PyJWT
 psycopg[binary]
+python-dotenv
