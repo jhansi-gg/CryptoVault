@@ -10,13 +10,15 @@ from argon2 import PasswordHasher
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from cryptography.hazmat.primitives.asymmetric import rsa, padding
 from cryptography.hazmat.primitives import hashes, serialization
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import FastAPI, Depends, HTTPException, UploadFile, File, Form
+from fastapi.responses import Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel
 
 from database import get_connection, init_db
-
+import mimetypes
+from cryptography.exceptions import InvalidTag
 
 app = FastAPI(title="CryptoVault Secure Communication")
 
@@ -88,7 +90,8 @@ class SendMessageRequest(BaseModel):
     recipient_username: str
     ciphertext: str
     signature: str = ""
-
+class ShareFileRequest(BaseModel):
+    recipient_username: str
 
 # -------------------- DATABASE INITIALIZATION --------------------
 
@@ -312,7 +315,92 @@ def decrypt_message(data: DecryptionRequest):
             status_code=400,
             detail="Decryption failed. Check the ciphertext and secret key.",
         )
+# -------------------- FILE ENCRYPTION --------------------
 
+@app.post("/files/encrypt")
+def encrypt_file(
+    file: UploadFile = File(...),
+    secret_key: str = Form(...),
+    current_user=Depends(get_current_user),
+):
+    allowed_types = {
+        ".pdf": "application/pdf",
+        ".png": "image/png",
+        ".jpg": "image/jpeg",
+        ".jpeg": "image/jpeg",
+        ".txt": "text/plain",
+        ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    }
+
+    filename = os.path.basename(file.filename or "file")
+    extension = os.path.splitext(filename)[1].lower()
+
+    if extension not in allowed_types:
+        raise HTTPException(
+            status_code=400,
+            detail="Only PDF, PNG, JPG, TXT, and DOCX files are supported.",
+        )
+
+    file_data = file.file.read()
+
+    if not file_data:
+        raise HTTPException(status_code=400, detail="File is empty.")
+
+    if len(file_data) > 10 * 1024 * 1024:
+        raise HTTPException(
+            status_code=413,
+            detail="Maximum file size is 10 MB.",
+        )
+
+    nonce = secrets.token_bytes(12)
+    key = create_aes_key(secret_key)
+    encrypted_data = AESGCM(key).encrypt(nonce, file_data, None)
+    file_hash = hashlib.sha256(file_data).hexdigest()
+    content_type = allowed_types[extension]
+
+    connection = get_connection()
+
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                INSERT INTO encrypted_files (
+                    user_id, original_filename, content_type,
+                    encrypted_data, encryption_iv, file_hash
+                )
+                VALUES (%s, %s, %s, %s, %s, %s)
+                RETURNING id
+                """,
+                (
+                    current_user["user_id"],
+                    filename,
+                    content_type,
+                    encrypted_data,
+                    nonce,
+                    file_hash,
+                ),
+            )
+            saved_file = cursor.fetchone()
+
+        connection.commit()
+
+        return {
+            "message": "File encrypted and saved successfully!",
+            "file_id": saved_file["id"],
+            "filename": filename,
+            "encrypted_size_bytes": len(encrypted_data),
+        }
+
+    except Exception:
+        connection.rollback()
+        raise HTTPException(
+            status_code=500,
+            detail="Could not save the encrypted file.",
+        )
+
+    finally:
+        connection.close()
+        file.file.close()
 
 # -------------------- DIGITAL SIGNATURES --------------------
 
@@ -685,3 +773,407 @@ def debug_database():
                     (SELECT COUNT(*) FROM public.users) AS user_count
             """)
             return cursor.fetchone()
+
+
+        # -------------------- LIST SAVED ENCRYPTED FILES --------------------
+
+@app.get("/files")
+def list_encrypted_files(
+    current_user=Depends(get_current_user),
+):
+    connection = get_connection()
+
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT id, original_filename, content_type,
+                       octet_length(encrypted_data) AS encrypted_size,
+                       created_at
+                FROM encrypted_files
+                WHERE user_id = %s
+                ORDER BY created_at DESC
+                """,
+                (current_user["user_id"],),
+            )
+            files = cursor.fetchall()
+
+        return {"files": files}
+
+    finally:
+        connection.close()
+
+        # -------------------- DOWNLOAD ENCRYPTED FILE --------------------
+
+@app.get("/files/{file_id}/download")
+def download_encrypted_file(
+    file_id: int,
+    current_user=Depends(get_current_user),
+):
+    connection = get_connection()
+
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT original_filename, encrypted_data
+                FROM encrypted_files
+                WHERE id = %s AND user_id = %s
+                """,
+                (file_id, current_user["user_id"]),
+            )
+            saved_file = cursor.fetchone()
+
+        if not saved_file:
+            raise HTTPException(
+                status_code=404,
+                detail="File not found.",
+            )
+
+        return Response(
+            content=bytes(saved_file["encrypted_data"]),
+            media_type="application/octet-stream",
+            headers={
+                "Content-Disposition": (
+                    f'attachment; filename="encrypted_{os.path.basename(saved_file["original_filename"])}"'
+                )
+            },
+        )
+
+    finally:
+        connection.close()
+        # -------------------- DECRYPT SAVED FILE --------------------
+
+@app.post("/files/{file_id}/decrypt")
+def decrypt_saved_file(
+    file_id: int,
+    secret_key: str = Form(...),
+    current_user=Depends(get_current_user),
+):
+    connection = get_connection()
+
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT original_filename, content_type,
+                       encrypted_data, encryption_iv, file_hash
+                FROM encrypted_files
+                WHERE id = %s AND user_id = %s
+                """,
+                (file_id, current_user["user_id"]),
+            )
+            saved_file = cursor.fetchone()
+
+        if not saved_file:
+            raise HTTPException(
+                status_code=404,
+                detail="File not found.",
+            )
+
+        key = create_aes_key(secret_key)
+
+        try:
+            original_data = AESGCM(key).decrypt(
+                bytes(saved_file["encryption_iv"]),
+                bytes(saved_file["encrypted_data"]),
+                None,
+            )
+        except Exception:
+            raise HTTPException(
+                status_code=400,
+                detail="Decryption failed. Check your secret key.",
+            )
+
+        actual_hash = hashlib.sha256(original_data).hexdigest()
+
+        if not secrets.compare_digest(
+            actual_hash, saved_file["file_hash"]
+        ):
+            raise HTTPException(
+                status_code=400,
+                detail="File integrity verification failed.",
+            )
+
+        return Response(
+            content=original_data,
+            media_type=saved_file["content_type"],
+            headers={
+                "Content-Disposition": (
+                    f'attachment; filename="{os.path.basename(saved_file["original_filename"])}"'
+                ),
+                "X-Integrity-Verified": "true",
+            },
+        )
+
+    finally:
+        connection.close()
+        
+# -------------------- SHARE ENCRYPTED FILE --------------------
+
+@app.post("/files/{file_id}/share")
+def share_encrypted_file(
+    file_id: int,
+    data: ShareFileRequest,
+    current_user=Depends(get_current_user),
+):
+    connection = get_connection()
+
+    try:
+        with connection.cursor() as cursor:
+
+            # Check whether the file belongs to the logged-in user
+            cursor.execute(
+                """
+                SELECT id, original_filename
+                FROM encrypted_files
+                WHERE id = %s AND user_id = %s
+                """,
+                (file_id, current_user["user_id"]),
+            )
+            saved_file = cursor.fetchone()
+
+            if not saved_file:
+                raise HTTPException(
+                    status_code=404,
+                    detail="File not found or you do not own this file.",
+                )
+
+            # Find the registered recipient
+            cursor.execute(
+                """
+                SELECT id, username
+                FROM users
+                WHERE username = %s
+                """,
+                (data.recipient_username,),
+            )
+            recipient = cursor.fetchone()
+
+            if not recipient:
+                raise HTTPException(
+                    status_code=404,
+                    detail="Recipient username not found.",
+                )
+
+            # Prevent sharing with yourself
+            if recipient["id"] == current_user["user_id"]:
+                raise HTTPException(
+                    status_code=400,
+                    detail="You cannot share a file with yourself.",
+                )
+
+            # Create the sharing permission
+            cursor.execute(
+                """
+                INSERT INTO file_shares
+                    (file_id, sender_id, recipient_id)
+                VALUES (%s, %s, %s)
+                """,
+                (
+                    file_id,
+                    current_user["user_id"],
+                    recipient["id"],
+                ),
+            )
+
+        connection.commit()
+
+        return {
+            "message": "Encrypted file shared successfully!",
+            "file_id": file_id,
+            "filename": saved_file["original_filename"],
+            "shared_with": recipient["username"],
+        }
+
+    except HTTPException:
+        connection.rollback()
+        raise
+
+    except Exception as error:
+        connection.rollback()
+
+        if getattr(error, "sqlstate", None) == "23505":
+            raise HTTPException(
+                status_code=409,
+                detail="This file has already been shared with this user.",
+            )
+
+        raise HTTPException(
+            status_code=500,
+            detail="Could not share the file.",
+        )
+
+    finally:
+        connection.close()
+
+
+# -------------------- SHARED WITH ME --------------------
+
+@app.get("/files/shared-with-me")
+def get_shared_files(
+    current_user=Depends(get_current_user),
+):
+    connection = get_connection()
+
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT
+                    f.id,
+                    f.original_filename,
+                    f.content_type,
+                    octet_length(f.encrypted_data) AS encrypted_size,
+                    f.created_at,
+                    sender.username AS shared_by,
+                    fs.shared_at
+                FROM file_shares AS fs
+                JOIN encrypted_files AS f
+                    ON fs.file_id = f.id
+                JOIN users AS sender
+                    ON fs.sender_id = sender.id
+                WHERE fs.recipient_id = %s
+                ORDER BY fs.shared_at DESC
+                """,
+                (current_user["user_id"],),
+            )
+
+            files = cursor.fetchall()
+
+        return {"shared_files": files}
+
+    finally:
+        connection.close()
+
+
+# -------------------- DOWNLOAD SHARED ENCRYPTED FILE --------------------
+
+@app.get("/files/shared-with-me/{file_id}/download")
+def download_shared_file(
+    file_id: int,
+    current_user=Depends(get_current_user),
+):
+    connection = get_connection()
+
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT
+                    f.original_filename,
+                    f.encrypted_data
+                FROM file_shares AS fs
+                JOIN encrypted_files AS f
+                    ON fs.file_id = f.id
+                WHERE fs.file_id = %s
+                  AND fs.recipient_id = %s
+                """,
+                (file_id, current_user["user_id"]),
+            )
+
+            shared_file = cursor.fetchone()
+
+        if not shared_file:
+            raise HTTPException(
+                status_code=404,
+                detail="Shared file not found or access denied.",
+            )
+
+        return Response(
+            content=bytes(shared_file["encrypted_data"]),
+            media_type="application/octet-stream",
+            headers={
+                "Content-Disposition": (
+                    'attachment; filename="encrypted_'
+                    + os.path.basename(shared_file["original_filename"])
+                    + '"'
+                )
+            },
+        )
+
+    finally:
+        connection.close()
+
+# -------------------- DECRYPT SHARED FILE --------------------
+
+@app.post("/files/shared-with-me/{file_id}/decrypt")
+def decrypt_shared_file(
+    file_id: int,
+    secret_key: str = Form(...),
+    current_user=Depends(get_current_user),
+):
+    connection = get_connection()
+
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT
+                    f.original_filename,
+                    f.content_type,
+                    f.encrypted_data,
+                    f.encryption_iv,
+                    f.file_hash
+                FROM file_shares AS fs
+                JOIN encrypted_files AS f
+                    ON fs.file_id = f.id
+                WHERE fs.file_id = %s
+                  AND fs.recipient_id = %s
+                """,
+                (file_id, current_user["user_id"]),
+            )
+
+            shared_file = cursor.fetchone()
+
+        if not shared_file:
+            raise HTTPException(
+                status_code=404,
+                detail="Shared file not found or access denied.",
+            )
+
+        # Generate the AES key using the original secret key
+        key = create_aes_key(secret_key)
+
+        try:
+            original_data = AESGCM(key).decrypt(
+                bytes(shared_file["encryption_iv"]),
+                bytes(shared_file["encrypted_data"]),
+                None,
+            )
+
+        except Exception:
+            raise HTTPException(
+                status_code=400,
+                detail="Decryption failed. Check the original secret key.",
+            )
+
+        # Verify file integrity
+        actual_hash = hashlib.sha256(original_data).hexdigest()
+
+        if not secrets.compare_digest(
+            actual_hash,
+            shared_file["file_hash"],
+        ):
+            raise HTTPException(
+                status_code=400,
+                detail="File integrity verification failed.",
+            )
+
+        return Response(
+            content=original_data,
+            media_type=shared_file["content_type"],
+            headers={
+                "Content-Disposition": (
+                    'attachment; filename="'
+                    + os.path.basename(
+                        shared_file["original_filename"]
+                    )
+                    + '"'
+                ),
+                "X-Integrity-Verified": "true",
+            },
+        )
+
+    finally:
+        connection.close()
