@@ -2,6 +2,7 @@
 <html lang="en">
 
 <head>
+    <link rel="stylesheet" href="style.css">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CryptoVault | Encrypt & Decrypt</title>
@@ -354,6 +355,73 @@
                 font-size: 16px;
             }
         }
+
+        /* ---------- SECURE FILE SHARING ---------- */
+
+        .file-sharing-section {
+            margin-top: 30px;
+        }
+
+        .file-sharing-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 25px;
+            margin-top: 20px;
+        }
+
+        .file-select {
+            width: 100%;
+            padding: 13px;
+            background: var(--input);
+            color: var(--text);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+        }
+
+        .shared-file-list {
+            display: grid;
+            gap: 14px;
+            margin-top: 16px;
+        }
+
+        .shared-file-card {
+            padding: 18px;
+            background: var(--input);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+        }
+
+        .shared-file-card h3 {
+            font-size: 15px;
+            overflow-wrap: anywhere;
+            margin-bottom: 8px;
+        }
+
+        .shared-file-details {
+            color: var(--muted);
+            font-size: 11px;
+            line-height: 1.7;
+            margin-bottom: 14px;
+        }
+
+        .shared-file-card .key-input,
+        .shared-file-card .button {
+            margin-top: 12px;
+        }
+
+        .empty-state {
+            color: var(--muted);
+            font-size: 12px;
+            padding: 14px;
+            border: 1px dashed var(--border);
+            border-radius: 8px;
+        }
+
+        @media (max-width: 800px) {
+            .file-sharing-grid {
+                grid-template-columns: 1fr;
+            }
+        }
     </style>
 </head>
 
@@ -433,18 +501,78 @@
             <div id="message" class="message" role="status" aria-live="polite"></div>
             <button class="secondary-button" onclick="clearAll()">Clear All</button>
         </section>
+
+        <!-- ---------- SECURE FILE SHARING ---------- -->
+        <section class="result file-sharing-section" id="fileSharingSection">
+            <h2>🔗 Secure File Sharing</h2>
+            <p class="panel-description">
+                Share encrypted files with another registered CryptoVault user
+                and decrypt files shared with you.
+            </p>
+
+            <div class="file-sharing-grid">
+                <div class="panel">
+                    <h2>📤 Share an Encrypted File</h2>
+                    <p class="panel-description">
+                        Select your encrypted file and enter the recipient username.
+                    </p>
+
+                    <label for="shareFileSelect">Select Encrypted File</label>
+                    <select id="shareFileSelect" class="file-select">
+                        <option value="">Loading your files...</option>
+                    </select>
+
+                    <div class="key-input">
+                        <label for="recipientUsername">Recipient Username</label>
+                        <input type="text" id="recipientUsername" placeholder="Enter registered username">
+                    </div>
+
+                    <button class="button" id="shareFileButton" onclick="shareEncryptedFile()">
+                        🔗 Share File
+                    </button>
+                    <div id="shareStatus" class="message" role="status" aria-live="polite"></div>
+
+                    <button class="secondary-button" type="button" onclick="loadOwnedFiles()">
+                        Refresh My Files
+                    </button>
+                </div>
+
+                <div class="panel">
+                    <h2>📥 Shared With Me</h2>
+                    <p class="panel-description">
+                        View files shared with your account. Enter the original
+                        secret key to decrypt them.
+                    </p>
+
+                    <button class="secondary-button" type="button" onclick="loadSharedFiles()">
+                        ↻ Refresh Shared Files
+                    </button>
+
+                    <div id="sharedFilesList" class="shared-file-list">
+                        <div class="empty-state">Loading shared files...</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
     </main>
 
     <footer>CRYPTOValut • AES-GCM • SECURE COMMUNICATION</footer>
 
     <script>
-        const API = "https://cryptovault-mysv.onrender.com";
+        const API =
+            (window.location.hostname === "127.0.0.1" ||
+                window.location.hostname === "localhost")
+                ? "http://127.0.0.1:8000"
+                : "https://cryptovault-mysv.onrender.com";
 
         function getToken() {
             return localStorage.getItem("access_token");
         }
 
-        if (!token) {
+        const currentToken = getToken();
+
+        if (!currentToken) {
             window.location.href = "index.html";
         }
 
@@ -563,6 +691,298 @@
         function goBack() {
             window.location.href = "home.html";
         }
+
+
+        // ---------- SECURE FILE SHARING ----------
+
+        function showShareStatus(text, type = "") {
+            const element = document.getElementById("shareStatus");
+            element.textContent = text;
+            element.className = "message" + (type ? " " + type : "");
+        }
+
+        async function loadOwnedFiles() {
+            const select = document.getElementById("shareFileSelect");
+            select.innerHTML = '<option value="">Loading files...</option>';
+
+            try {
+                const response = await fetch(`${API}/files`, {
+                    headers: {
+                        "Authorization": "Bearer " + getToken()
+                    }
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    select.innerHTML =
+                        '<option value="">Unable to load files</option>';
+                    showShareStatus(
+                        data.detail || "Could not load your files.", "error"
+                    );
+                    return;
+                }
+
+                select.innerHTML =
+                    '<option value="">Select an encrypted file</option>';
+
+                const files = data.files || [];
+
+                files.forEach(file => {
+                    const option = document.createElement("option");
+                    option.value = file.id;
+                    option.textContent =
+                        `${file.original_filename} (ID: ${file.id})`;
+                    select.appendChild(option);
+                });
+
+                if (files.length === 0) {
+                    select.innerHTML =
+                        '<option value="">No encrypted files found</option>';
+                }
+            } catch (error) {
+                console.error(error);
+                select.innerHTML =
+                    '<option value="">Server connection failed</option>';
+                showShareStatus(
+                    "Cannot connect to the file service.", "error"
+                );
+            }
+        }
+
+        async function shareEncryptedFile() {
+            const fileId =
+                document.getElementById("shareFileSelect").value;
+            const recipient =
+                document.getElementById("recipientUsername").value.trim();
+            const button =
+                document.getElementById("shareFileButton");
+
+            if (!fileId || !recipient) {
+                showShareStatus(
+                    "Please select a file and enter the recipient username.",
+                    "error"
+                );
+                return;
+            }
+
+            button.disabled = true;
+
+            try {
+                showShareStatus("Sharing encrypted file...");
+
+                const response = await fetch(
+                    `${API}/files/${encodeURIComponent(fileId)}/share`,
+                    {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "Authorization": "Bearer " + getToken()
+                        },
+                        body: JSON.stringify({
+                            recipient_username: recipient
+                        })
+                    }
+                );
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    showShareStatus(
+                        data.detail || "File sharing failed.", "error"
+                    );
+                    return;
+                }
+
+                showShareStatus(
+                    `✓ ${data.filename} shared successfully with ${data.shared_with}.`,
+                    "success"
+                );
+                document.getElementById("recipientUsername").value = "";
+            } catch (error) {
+                console.error(error);
+                showShareStatus(
+                    "Cannot connect to the sharing service.", "error"
+                );
+            } finally {
+                button.disabled = false;
+            }
+        }
+
+        async function loadSharedFiles() {
+            const container =
+                document.getElementById("sharedFilesList");
+            container.textContent = "Loading shared files...";
+
+            try {
+                const response = await fetch(
+                    `${API}/files/shared-with-me`,
+                    {
+                        headers: {
+                            "Authorization": "Bearer " + getToken()
+                        }
+                    }
+                );
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    container.textContent =
+                        data.detail || "Could not load shared files.";
+                    return;
+                }
+
+                container.innerHTML = "";
+                const files = data.shared_files || [];
+
+                if (files.length === 0) {
+                    const empty = document.createElement("div");
+                    empty.className = "empty-state";
+                    empty.textContent =
+                        "No files have been shared with you yet.";
+                    container.appendChild(empty);
+                    return;
+                }
+
+                files.forEach(file => {
+                    const card = document.createElement("div");
+                    card.className = "shared-file-card";
+
+                    const title = document.createElement("h3");
+                    title.textContent =
+                        `🔒 ${file.original_filename || "Shared file"}`;
+
+                    const details = document.createElement("p");
+                    details.className = "shared-file-details";
+                    const sharedDate = file.shared_at
+                        ? new Date(file.shared_at).toLocaleString()
+                        : "Date unavailable";
+                    details.textContent =
+                        `File ID: ${file.id} · Shared by: ${file.shared_by} · ${sharedDate}`;
+
+                    const label = document.createElement("label");
+                    label.textContent = "Original Secret Key";
+
+                    const keyInput = document.createElement("input");
+                    keyInput.type = "password";
+                    keyInput.placeholder =
+                        "Enter the key used by the sender";
+                    keyInput.autocomplete = "off";
+
+                    const button = document.createElement("button");
+                    button.className = "button";
+                    button.type = "button";
+                    button.textContent = "🔓 Decrypt & Download";
+
+                    const status = document.createElement("div");
+                    status.className = "message";
+                    status.setAttribute("role", "status");
+                    status.setAttribute("aria-live", "polite");
+
+                    button.addEventListener("click", () => {
+                        decryptSharedFile(
+                            file.id,
+                            file.original_filename,
+                            keyInput,
+                            button,
+                            status
+                        );
+                    });
+
+                    card.append(
+                        title, details, label, keyInput, button, status
+                    );
+                    container.appendChild(card);
+                });
+            } catch (error) {
+                console.error(error);
+                container.textContent =
+                    "Cannot connect to the shared files service.";
+            }
+        }
+
+        async function decryptSharedFile(
+            fileId, filename, keyInput, button, status
+        ) {
+            const secretKey = keyInput.value;
+
+            if (!secretKey) {
+                status.textContent =
+                    "Please enter the original secret key.";
+                status.className = "message error";
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append("secret_key", secretKey);
+            button.disabled = true;
+            status.textContent =
+                "Decrypting file and checking integrity...";
+            status.className = "message";
+
+            try {
+                const response = await fetch(
+                    `${API}/files/shared-with-me/${encodeURIComponent(fileId)}/decrypt`,
+                    {
+                        method: "POST",
+                        headers: {
+                            "Authorization": "Bearer " + getToken()
+                        },
+                        body: formData
+                    }
+                );
+
+                if (!response.ok) {
+                    let errorMessage =
+                        "Decryption failed. Check the original secret key.";
+                    try {
+                        const errorData = await response.json();
+                        errorMessage = errorData.detail || errorMessage;
+                    } catch (_) { }
+                    status.textContent = errorMessage;
+                    status.className = "message error";
+                    return;
+                }
+
+                const integrityVerified =
+                    response.headers.get("X-Integrity-Verified") === "true";
+                const fileBlob = await response.blob();
+                const downloadUrl = URL.createObjectURL(fileBlob);
+                const link = document.createElement("a");
+                link.href = downloadUrl;
+                link.download = filename || "decrypted_file";
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+
+                setTimeout(() => URL.revokeObjectURL(downloadUrl), 1000);
+
+                if (integrityVerified) {
+                    status.textContent =
+                        "✓ Decryption successful. File integrity verified.";
+                    status.className = "message success";
+                } else {
+                    status.textContent =
+                        "File downloaded, but integrity verification was not confirmed.";
+                    status.className = "message error";
+                }
+            } catch (error) {
+                console.error(error);
+                status.textContent =
+                    "Cannot connect to the decryption service.";
+                status.className = "message error";
+            } finally {
+                keyInput.value = "";
+                button.disabled = false;
+            }
+        }
+
+        // Load both lists after the page has authenticated the user.
+        if (currentToken) {
+            loadOwnedFiles();
+            loadSharedFiles();
+        }
+
     </script>
 </body>
 

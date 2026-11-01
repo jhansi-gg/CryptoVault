@@ -587,16 +587,6 @@
                 </p>
                 <span class="arrow">Open File Security →</span>
             </div>
-            <div class="feature-card" role="link" tabindex="0" onclick="openFeature('files.html')"
-                onkeydown="handleCardKey(event, 'files.html')">
-                <div class="feature-icon">📁</div>
-                <h3>File Encryption &amp; Decryption</h3>
-                <p>
-                    Encrypt PDF, image, text and DOCX files, save them
-                    securely, and download the original files after decryption.
-                </p>
-                <span class="arrow">Open File Security →</span>
-            </div>
 
 
             <div class="feature-card" role="link" tabindex="0" onclick="openFeature('signature.html')"
@@ -631,6 +621,18 @@
                 </p>
                 <span class="arrow">Open Messaging →</span>
             </div>
+
+            <div class="feature-card" role="link" tabindex="0" onclick="openFeature('files.html')"
+                onkeydown="handleCardKey(event, 'files.html')">
+                <div class="feature-icon">🤝</div>
+                <h3>Secure File Sharing</h3>
+                <p>
+                    Share encrypted files securely with registered users
+                    and manage your shared files.
+                </p>
+                <span class="arrow">Open File Sharing →</span>
+            </div>
+
         </section>
 
         <section class="status-panel">
@@ -653,6 +655,7 @@
         const API_BASE =
             (window.location.hostname === "127.0.0.1" ||
                 window.location.hostname === "localhost")
+
                 ? "http://127.0.0.1:8000"
                 : "https://cryptovault-mysv.onrender.com";
 
