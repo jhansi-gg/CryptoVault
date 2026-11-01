@@ -2,9 +2,11 @@
 <html lang="en">
 
 <head>
+
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CryptoVault | Dashboard</title>
+    <link rel="stylesheet" href="style.css">
 
     <style>
         :root {
@@ -26,9 +28,32 @@
         }
 
         body {
-            background: var(--bg);
+            background:
+                radial-gradient(circle at 15% 20%,
+                    rgba(56, 189, 248, 0.12),
+                    transparent 35%),
+                radial-gradient(circle at 85% 75%,
+                    rgba(37, 99, 235, 0.13),
+                    transparent 35%),
+                var(--bg);
+            background-size: 150% 150%;
+            animation: backgroundGlow 12s ease-in-out infinite alternate;
             color: var(--text);
             min-height: 100vh;
+        }
+
+        @keyframes backgroundGlow {
+            0% {
+                background-position: 0% 0%;
+            }
+
+            50% {
+                background-position: 100% 50%;
+            }
+
+            100% {
+                background-position: 0% 100%;
+            }
         }
 
         header {
@@ -116,12 +141,249 @@
 
         .features {
             display: grid;
-            grid-template-columns: repeat(3, minmax(0, 1fr));
+            grid-template-columns: repeat(6, minmax(0, 1fr));
             gap: 20px;
+        }
+
+
+        /* Feature card grid placement */
+        .feature-card {
+            grid-column: span 2;
+        }
+
+        /* Premium glassmorphism card */
+        .feature-card {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: flex-start;
+
+            padding: 28px;
+            min-height: 230px;
+
+            background: linear-gradient(135deg,
+                    rgba(20, 42, 67, 0.78),
+                    rgba(9, 25, 43, 0.88));
+
+            border: 1px solid rgba(56, 189, 248, 0.18);
+            border-radius: 18px;
+
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+
+            box-shadow:
+                0 8px 25px rgba(0, 0, 0, 0.20),
+                inset 0 1px 0 rgba(255, 255, 255, 0.04);
+
+            overflow: hidden;
+            cursor: pointer;
+
+            transition:
+                transform 0.35s ease,
+                background 0.35s ease,
+                border-color 0.35s ease,
+                box-shadow 0.35s ease;
+        }
+
+        /* Center the last two cards */
+        .feature-card:nth-child(4) {
+            grid-column: 2 / span 2;
+        }
+
+        .feature-card:nth-child(5) {
+            grid-column: 4 / span 2;
+        }
+
+        /* Card hover effect */
+        .feature-card:hover {
+            transform: translateY(-7px);
+
+            background: linear-gradient(135deg,
+                    rgba(24, 65, 100, 0.92),
+                    rgba(12, 36, 60, 0.96));
+
+            border-color: rgba(56, 189, 248, 0.65);
+
+            box-shadow:
+                0 15px 35px rgba(0, 0, 0, 0.30),
+                0 0 22px rgba(56, 189, 248, 0.13),
+                inset 0 1px 0 rgba(255, 255, 255, 0.08);
+        }
+
+        .feature-card:focus-visible {
+            outline: 2px solid var(--accent);
+            outline-offset: 4px;
+        }
+
+        /* Card entrance animation */
+        @keyframes cardAppear {
+            from {
+                opacity: 0;
+                translate: 0 20px;
+            }
+
+            to {
+                opacity: 1;
+                translate: 0 0;
+            }
+        }
+
+        .feature-card {
+            animation: cardAppear 0.7s ease both;
+        }
+
+        .feature-card:nth-child(1) {
+            animation-delay: 0.1s;
+        }
+
+        .feature-card:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .feature-card:nth-child(3) {
+            animation-delay: 0.3s;
+        }
+
+        .feature-card:nth-child(4) {
+            animation-delay: 0.4s;
+        }
+
+        .feature-card:nth-child(5) {
+            animation-delay: 0.5s;
+        }
+
+        /* Premium icon appearance */
+        .feature-icon {
+            width: 52px;
+            height: 52px;
+
+            display: grid;
+            place-items: center;
+
+            border-radius: 14px;
+            color: var(--accent);
+
+            background: rgba(56, 189, 248, 0.10);
+            border: 1px solid rgba(56, 189, 248, 0.25);
+
+            font-size: 26px;
+            margin-bottom: 22px;
+
+            box-shadow: 0 0 18px rgba(56, 189, 248, 0.08);
+
+            transition: all 0.35s ease;
+        }
+
+        .feature-card:hover .feature-icon {
+            background: rgba(56, 189, 248, 0.18);
+            border-color: rgba(56, 189, 248, 0.55);
+            box-shadow: 0 0 22px rgba(56, 189, 248, 0.18);
+        }
+
+        .feature-card h3 {
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+
+        .feature-card p {
+            color: var(--muted);
+            font-size: 14px;
+            line-height: 1.7;
+            margin-bottom: 20px;
+        }
+
+        .arrow {
+            color: var(--accent);
+            font-size: 13px;
+            font-weight: bold;
+            margin-top: auto;
+        }
+
+
+        .feature-card {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: flex-start;
+
+            padding: 28px;
+            min-height: 190px;
+
+            background: linear-gradient(135deg,
+                    rgba(20, 42, 67, 0.78),
+                    rgba(9, 25, 43, 0.88));
+
+            border: 1px solid rgba(56, 189, 248, 0.18);
+            border-radius: 18px;
+
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+
+            box-shadow:
+                0 8px 25px rgba(0, 0, 0, 0.20),
+                inset 0 1px 0 rgba(255, 255, 255, 0.04);
+
+            transition:
+                transform 0.35s ease,
+                background 0.35s ease,
+                border-color 0.35s ease,
+                box-shadow 0.35s ease;
+
+            overflow: hidden;
+            cursor: pointer;
+        }
+
+        .feature-card:nth-child(4) {
+            grid-column: 2 / span 2;
+        }
+
+        .feature-card:nth-child(5) {
+            grid-column: 4 / span 2;
         }
 
         .feature-card {
             display: flex;
+            /* Dashboard card entrance animation */
+
+            @keyframes cardAppear {
+                from {
+                    opacity: 0;
+                    transform: translateY(25px);
+                }
+
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+
+            .feature-card {
+                opacity: 0;
+                animation: cardAppear 0.7s ease forwards;
+            }
+
+            .feature-card:nth-child(1) {
+                animation-delay: 0.1s;
+            }
+
+            .feature-card:nth-child(2) {
+                animation-delay: 0.2s;
+            }
+
+            .feature-card:nth-child(3) {
+                animation-delay: 0.3s;
+            }
+
+            .feature-card:nth-child(4) {
+                animation-delay: 0.4s;
+            }
+
+            .feature-card:nth-child(5) {
+                animation-delay: 0.5s;
+            }
+
             flex-direction: column;
             align-items: flex-start;
             min-height: 230px;
@@ -130,14 +392,36 @@
             border: 1px solid var(--border);
             background: var(--card);
             cursor: pointer;
-            transition: transform .2s, border-color .2s,
-                box-shadow .2s;
+            transition: transform .2s,
+            border-color .2s,
+            box-shadow .2s;
+        }
+
+        .feature-card {
+            transition: transform 0.25s ease,
+                border-color 0.25s ease,
+                box-shadow 0.25s ease,
+                background 0.25s ease;
         }
 
         .feature-card:hover {
-            transform: translateY(-4px);
-            border-color: var(--accent);
-            box-shadow: 0 10px 35px #02081280;
+            transform: translateY(-7px);
+
+            background: linear-gradient(135deg,
+                    rgba(24, 65, 100, 0.92),
+                    rgba(12, 36, 60, 0.96));
+
+            border-color: rgba(56, 189, 248, 0.65);
+
+            box-shadow:
+                0 15px 35px rgba(0, 0, 0, 0.30),
+                0 0 22px rgba(56, 189, 248, 0.13),
+                inset 0 1px 0 rgba(255, 255, 255, 0.08);
+        }
+
+        .feature-card:focus-visible {
+            outline: 2px solid var(--accent);
+            outline-offset: 4px;
         }
 
         .feature-icon {
@@ -213,7 +497,19 @@
 
         @media (max-width: 900px) {
             .features {
-                grid-template-columns: repeat(2, minmax(0, 1fr));
+                grid-template-columns: repeat(4, minmax(0, 1fr));
+            }
+
+            .feature-card {
+                grid-column: span 2;
+            }
+
+            .feature-card:nth-child(4) {
+                grid-column: auto;
+            }
+
+            .feature-card:nth-child(5) {
+                grid-column: 2 / span 2;
             }
         }
 
@@ -238,6 +534,7 @@
             }
 
             .feature-card {
+                grid-column: 1 / -1;
                 min-height: 200px;
             }
         }
@@ -280,6 +577,27 @@
                 </p>
                 <span class="arrow">Open Encryption →</span>
             </div>
+            <div class="feature-card" role="link" tabindex="0" onclick="openFeature('files.html')"
+                onkeydown="handleCardKey(event, 'files.html')">
+                <div class="feature-icon">📁</div>
+                <h3>File Encryption &amp; Decryption</h3>
+                <p>
+                    Encrypt your PDF, images and documents securely,
+                    download encrypted files and decrypt them when needed.
+                </p>
+                <span class="arrow">Open File Security →</span>
+            </div>
+            <div class="feature-card" role="link" tabindex="0" onclick="openFeature('files.html')"
+                onkeydown="handleCardKey(event, 'files.html')">
+                <div class="feature-icon">📁</div>
+                <h3>File Encryption &amp; Decryption</h3>
+                <p>
+                    Encrypt PDF, image, text and DOCX files, save them
+                    securely, and download the original files after decryption.
+                </p>
+                <span class="arrow">Open File Security →</span>
+            </div>
+
 
             <div class="feature-card" role="link" tabindex="0" onclick="openFeature('signature.html')"
                 onkeydown="handleCardKey(event, 'signature.html')">
@@ -332,7 +650,11 @@
     </footer>
 
     <script>
-        const API_BASE = "https://cryptovault-mysv.onrender.com";
+        const API_BASE =
+            (window.location.hostname === "127.0.0.1" ||
+                window.location.hostname === "localhost")
+                ? "http://127.0.0.1:8000"
+                : "https://cryptovault-mysv.onrender.com";
 
         function logout() {
             localStorage.removeItem("access_token");
