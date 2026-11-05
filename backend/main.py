@@ -10,12 +10,15 @@ from argon2 import PasswordHasher
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from cryptography.hazmat.primitives.asymmetric import rsa, padding
 from cryptography.hazmat.primitives import hashes, serialization
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+from cryptography.exceptions import InvalidTag
 from fastapi import FastAPI, Depends, HTTPException, UploadFile, File, Form
 from fastapi.responses import Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel
-
+class MessageDecryptionRequest(BaseModel):
+    secret_key: str
 from database import get_connection, init_db
 import mimetypes
 from cryptography.exceptions import InvalidTag
@@ -85,6 +88,8 @@ class EncryptionRequest(BaseModel):
 class DecryptionRequest(BaseModel):
     ciphertext: str
     secret_key: str
+class MessageDecryptionRequest(BaseModel):
+     secret_key: str
 
 
 class SendMessageRequest(BaseModel):
@@ -259,6 +264,180 @@ def get_me(current_user=Depends(get_current_user)):
 
 def create_aes_key(secret_key: str) -> bytes:
     return hashlib.sha256(secret_key.encode("utf-8")).digest()
+
+# -------------------- PERSISTENT DIGITAL SIGNING KEYS --------------------
+
+def get_signing_encryption_key() -> bytes:
+    secret = os.getenv("SIGNING_KEY_ENCRYPTION_SECRET")
+
+    if not secret:
+        raise RuntimeError(
+            "SIGNING_KEY_ENCRYPTION_SECRET is not configured."
+        )
+
+    return hashlib.sha256(secret.encode("utf-8")).digest()
+
+
+def get_or_create_signing_keys(user_id: int):
+    connection = get_connection()
+
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT signing_public_key,
+                       signing_private_key_encrypted
+                FROM users
+                WHERE id = %s
+                FOR UPDATE
+                """,
+                (user_id,),
+            )
+
+            user = cursor.fetchone()
+
+            if not user:
+                raise HTTPException(
+                    status_code=404,
+                    detail="User not found.",
+                )
+
+            # Reuse the user's existing key pair.
+            if (
+                user["signing_public_key"]
+                and user["signing_private_key_encrypted"]
+            ):
+                public_key_pem = user["signing_public_key"]
+                encrypted_private_key = bytes(
+                    user["signing_private_key_encrypted"]
+                )
+
+            else:
+                # Generate a persistent RSA key pair.
+                private_key = rsa.generate_private_key(
+                    public_exponent=65537,
+                    key_size=2048,
+                )
+
+                public_key = private_key.public_key()
+
+                private_key_pem = private_key.private_bytes(
+                    encoding=serialization.Encoding.PEM,
+                    format=serialization.PrivateFormat.PKCS8,
+                    encryption_algorithm=serialization.NoEncryption(),
+                )
+
+                public_key_pem = public_key.public_bytes(
+                    encoding=serialization.Encoding.PEM,
+                    format=serialization.PublicFormat.SubjectPublicKeyInfo,
+                ).decode("utf-8")
+
+                # Encrypt the private key before storing it.
+                nonce = secrets.token_bytes(12)
+
+                encrypted_private_key = nonce + AESGCM(
+                    get_signing_encryption_key()
+                ).encrypt(
+                    nonce,
+                    private_key_pem,
+                    None,
+                )
+
+                cursor.execute(
+                    """
+                    UPDATE users
+                    SET signing_public_key = %s,
+                        signing_private_key_encrypted = %s
+                    WHERE id = %s
+                    """,
+                    (
+                        public_key_pem,
+                        encrypted_private_key,
+                        user_id,
+                    ),
+                )
+                
+                
+                connection.commit()
+
+        return public_key_pem, encrypted_private_key
+
+    finally:
+        connection.close()
+
+
+def sign_with_user_key(user_id: int, message: str):
+    public_key_pem, encrypted_private_key = (
+        get_or_create_signing_keys(user_id)
+    )
+
+    try:
+        nonce = encrypted_private_key[:12]
+        encrypted_data = encrypted_private_key[12:]
+
+        private_key_pem = AESGCM(
+            get_signing_encryption_key()
+        ).decrypt(
+            nonce,
+            encrypted_data,
+            None,
+        )
+
+        private_key = serialization.load_pem_private_key(
+            private_key_pem,
+            password=None,
+        )
+
+        signature = private_key.sign(
+            message.encode("utf-8"),
+            padding.PSS(
+                mgf=padding.MGF1(hashes.SHA256()),
+                salt_length=padding.PSS.MAX_LENGTH,
+            ),
+            hashes.SHA256(),
+        )
+
+        return (
+            base64.b64encode(signature).decode("utf-8"),
+            public_key_pem,
+        )
+
+    except Exception:
+        raise HTTPException(
+            status_code=500,
+            detail="Could not create the digital signature.",
+        )
+
+
+def verify_message_signature(
+    message: str,
+    signature: str,
+    public_key_pem: str,
+) -> bool:
+    try:
+        public_key = serialization.load_pem_public_key(
+            public_key_pem.encode("utf-8")
+        )
+
+        signature_bytes = base64.b64decode(
+            signature,
+            validate=True,
+        )
+
+        public_key.verify(
+            signature_bytes,
+            message.encode("utf-8"),
+            padding.PSS(
+                mgf=padding.MGF1(hashes.SHA256()),
+                salt_length=padding.PSS.MAX_LENGTH,
+            ),
+            hashes.SHA256(),
+        )
+
+        return True
+
+    except Exception:
+        return False
 
 
 @app.post("/encrypt")
@@ -652,6 +831,9 @@ def get_users(current_user=Depends(get_current_user)):
 
 # -------------------- SEND MESSAGE --------------------
 
+
+# -------------------- SEND SIGNED MESSAGE --------------------
+
 @app.post("/messages/send")
 def send_message(
     data: SendMessageRequest,
@@ -662,6 +844,12 @@ def send_message(
             status_code=400,
             detail="Ciphertext cannot be empty.",
         )
+
+    # Automatically sign the encrypted message.
+    signature, public_key_pem = sign_with_user_key(
+        current_user["user_id"],
+        data.ciphertext,
+    )
 
     connection = get_connection()
 
@@ -687,23 +875,31 @@ def send_message(
 
             cursor.execute(
                 """
-                INSERT INTO messages
-                    (sender_id, recipient_id, ciphertext, signature)
-                VALUES (%s, %s, %s, %s)
+                INSERT INTO messages (
+                    sender_id,
+                    recipient_id,
+                    ciphertext,
+                    signature,
+                    sender_public_key
+                )
+                VALUES (%s, %s, %s, %s, %s)
                 """,
                 (
                     current_user["user_id"],
                     recipient["id"],
                     data.ciphertext,
-                    data.signature,
+                    signature,
+                    public_key_pem,
                 ),
             )
 
         connection.commit()
 
         return {
-            "message": "Encrypted message sent successfully!",
+            "message": "Encrypted and digitally signed message sent successfully!",
             "recipient": data.recipient_username,
+            "signature": signature,
+            "sender_public_key": public_key_pem,
         }
 
     except HTTPException:
@@ -714,92 +910,8 @@ def send_message(
         connection.rollback()
         raise HTTPException(
             status_code=500,
-            detail="Could not send the message.",
+            detail="Could not send the signed message.",
         )
-
-    finally:
-        connection.close()
-
-
-# -------------------- MESSAGE INBOX --------------------
-
-@app.get("/messages/inbox")
-def get_inbox(current_user=Depends(get_current_user)):
-    connection = get_connection()
-
-    try:
-        with connection.cursor() as cursor:
-            cursor.execute(
-                """
-                SELECT
-                    messages.id,
-                    sender.username AS sender_username,
-                    messages.ciphertext,
-                    messages.signature,
-                    messages.created_at
-                FROM messages
-                JOIN users AS sender
-                    ON messages.sender_id = sender.id
-                WHERE messages.recipient_id = %s
-                ORDER BY messages.created_at DESC
-                """,
-                (current_user["user_id"],),
-            )
-            messages = cursor.fetchall()
-
-        return {
-            "messages": [
-                {
-                    "id": message["id"],
-                    "sender_username": message["sender_username"],
-                    "ciphertext": message["ciphertext"],
-                    "signature": message["signature"],
-                    "created_at": message["created_at"],
-                }
-                for message in messages
-            ]
-        }
-
-    finally:
-        connection.close()
-@app.get("/debug/database")
-def debug_database():
-    with get_connection() as connection:
-        with connection.cursor() as cursor:
-            cursor.execute("""
-                SELECT
-                    current_database() AS database_name,
-                    current_schema() AS schema_name,
-                    to_regclass('public.users') AS users_table,
-                    (SELECT COUNT(*) FROM public.users) AS user_count
-            """)
-            return cursor.fetchone()
-
-
-        # -------------------- LIST SAVED ENCRYPTED FILES --------------------
-
-@app.get("/files")
-def list_encrypted_files(
-    current_user=Depends(get_current_user),
-):
-    connection = get_connection()
-
-    try:
-        with connection.cursor() as cursor:
-            cursor.execute(
-                """
-                SELECT id, original_filename, content_type,
-                       octet_length(encrypted_data) AS encrypted_size,
-                       created_at
-                FROM encrypted_files
-                WHERE user_id = %s
-                ORDER BY created_at DESC
-                """,
-                (current_user["user_id"],),
-            )
-            files = cursor.fetchall()
-
-        return {"files": files}
 
     finally:
         connection.close()
@@ -843,6 +955,314 @@ def download_encrypted_file(
 
     finally:
         connection.close()
+        
+
+
+# -------------------- MESSAGE INBOX --------------------
+
+@app.get("/messages/inbox")
+def get_inbox(current_user=Depends(get_current_user)):
+    connection = get_connection()
+
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT
+                    messages.id,
+                    sender.username AS sender_username,
+                    messages.ciphertext,
+                    messages.signature,
+                    messages.sender_public_key,
+                    messages.created_at
+                FROM messages
+                JOIN users AS sender
+                    ON messages.sender_id = sender.id
+                WHERE messages.recipient_id = %s
+                  AND messages.recipient_deleted_at IS NULL
+                ORDER BY messages.created_at DESC
+                """,
+                (current_user["user_id"],),
+            )
+
+            messages = cursor.fetchall()
+
+        return {
+            "messages": [
+                {
+                    "id": message["id"],
+                    "sender_username": message["sender_username"],
+                    "ciphertext": message["ciphertext"],
+                    "signature": message["signature"],
+                    "sender_public_key": message["sender_public_key"],
+                    "created_at": message["created_at"],
+                    "signature_valid": verify_message_signature(
+                        message["ciphertext"],
+                        message["signature"] or "",
+                        message["sender_public_key"] or "",
+                    ),
+                }
+                for message in messages
+            ]
+        }
+
+    finally:
+        connection.close()
+
+# -------------------- SENT MESSAGES --------------------
+
+@app.get("/messages/sent")
+def get_sent_messages(
+    current_user=Depends(get_current_user),
+):
+    connection = get_connection()
+
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT
+                    messages.id,
+                    recipient.username AS recipient_username,
+                    messages.ciphertext,
+                    messages.signature,
+                    messages.sender_public_key,
+                    messages.created_at
+                FROM messages
+                JOIN users AS recipient
+                    ON messages.recipient_id = recipient.id
+                WHERE messages.sender_id = %s
+                  AND messages.sender_deleted_at IS NULL
+                ORDER BY messages.created_at DESC
+                """,
+                (current_user["user_id"],),
+            )
+
+            messages = cursor.fetchall()
+
+        return {"messages": messages}
+
+    finally:
+        connection.close()
+
+        
+# -------------------- CLEAR ALL MESSAGES --------------------
+
+@app.delete("/messages/clear-all")
+def clear_all_messages(
+    current_user=Depends(get_current_user),
+):
+    connection = get_connection()
+
+    try:
+        with connection.cursor() as cursor:
+
+            # Clear received messages from this user's account
+            cursor.execute(
+                """
+                UPDATE messages
+                SET recipient_deleted_at = CURRENT_TIMESTAMP
+                WHERE recipient_id = %s
+                  AND recipient_deleted_at IS NULL
+                """,
+                (current_user["user_id"],),
+            )
+            received_count = cursor.rowcount
+
+            # Clear sent messages from this user's account
+            cursor.execute(
+                """
+                UPDATE messages
+                SET sender_deleted_at = CURRENT_TIMESTAMP
+                WHERE sender_id = %s
+                  AND sender_deleted_at IS NULL
+                """,
+                (current_user["user_id"],),
+            )
+            sent_count = cursor.rowcount
+
+        connection.commit()
+
+        return {
+            "message": "All messages cleared from your account.",
+            "received_messages_deleted": received_count,
+            "sent_messages_deleted": sent_count,
+        }
+
+    except Exception:
+        connection.rollback()
+        raise HTTPException(
+            status_code=500,
+            detail="Could not clear messages.",
+        )
+
+    finally:
+        connection.close()
+
+# -------------------- DELETE MESSAGE --------------------
+
+@app.delete("/messages/{message_id}")
+def delete_message(
+    message_id: int,
+    current_user=Depends(get_current_user),
+):
+    connection = get_connection()
+
+    try:
+        with connection.cursor() as cursor:
+
+            # First, try deleting the message from the recipient's account.
+            cursor.execute(
+                """
+                UPDATE messages
+                SET recipient_deleted_at = CURRENT_TIMESTAMP
+                WHERE id = %s
+                  AND recipient_id = %s
+                  AND recipient_deleted_at IS NULL
+                """,
+                (message_id, current_user["user_id"]),
+            )
+
+            deleted = cursor.rowcount
+
+            # If not found as a received message, try the sender's account.
+            if deleted == 0:
+                cursor.execute(
+                    """
+                    UPDATE messages
+                    SET sender_deleted_at = CURRENT_TIMESTAMP
+                    WHERE id = %s
+                      AND sender_id = %s
+                      AND sender_deleted_at IS NULL
+                    """,
+                    (message_id, current_user["user_id"]),
+                )
+
+                deleted = cursor.rowcount
+
+        connection.commit()
+
+        if deleted == 0:
+            raise HTTPException(
+                status_code=404,
+                detail="Message not found or already deleted.",
+            )
+
+        return {
+            "message": "Message deleted from your account successfully!"
+        }
+
+    except HTTPException:
+        connection.rollback()
+        raise
+
+    except Exception:
+        connection.rollback()
+        raise HTTPException(
+            status_code=500,
+            detail="Could not delete the message.",
+        )
+
+    finally:
+        connection.close()
+
+
+# -------------------- DECRYPT INBOX MESSAGE --------------------
+
+@app.post("/messages/{message_id}/decrypt")
+def decrypt_inbox_message(
+    message_id: int,
+    data: MessageDecryptionRequest,
+    current_user=Depends(get_current_user),
+):
+    connection = get_connection()
+
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT
+                    messages.id,
+                    messages.ciphertext,
+                    messages.signature,
+                    messages.sender_public_key,
+                    sender.username AS sender_username
+                FROM messages
+                JOIN users AS sender
+                    ON messages.sender_id = sender.id
+                WHERE messages.id = %s
+                  AND messages.recipient_id = %s
+                """,
+                (message_id, current_user["user_id"]),
+            )
+
+            message = cursor.fetchone()
+
+        if not message:
+            raise HTTPException(
+                status_code=404,
+                detail="Message not found or access denied.",
+            )
+
+        # Verify the sender's digital signature first.
+        signature_valid = verify_message_signature(
+            message["ciphertext"],
+            message["signature"] or "",
+            message["sender_public_key"] or "",
+        )
+
+        if not signature_valid:
+            raise HTTPException(
+                status_code=400,
+                detail="Digital signature verification failed. Message cannot be trusted.",
+            )
+
+        # Decode the encrypted message.
+        raw_data = base64.b64decode(
+            message["ciphertext"],
+            validate=True,
+        )
+
+        if len(raw_data) < 29:
+            raise HTTPException(
+                status_code=400,
+                detail="Invalid encrypted message.",
+            )
+
+        nonce = raw_data[:12]
+        encrypted_data = raw_data[12:]
+
+        # Generate the same AES key used by the sender.
+        key = create_aes_key(data.secret_key)
+
+        # Decrypt the message.
+        try:
+            plaintext = AESGCM(key).decrypt(
+                nonce,
+                encrypted_data,
+                None,
+            ).decode("utf-8")
+
+        except Exception:
+            raise HTTPException(
+                status_code=400,
+                detail="Decryption failed. Check the original sender's secret key.",
+            )
+
+        return {
+            "message": "Message decrypted successfully!",
+            "message_id": message["id"],
+            "sender_username": message["sender_username"],
+            "plaintext": plaintext,
+            "signature_valid": True,
+        }
+
+    finally:
+        connection.close()
+
+
+
+
         # -------------------- DECRYPT SAVED FILE --------------------
 
 @app.post("/files/{file_id}/decrypt")
@@ -1043,13 +1463,11 @@ def get_shared_files(
             files = cursor.fetchall()
 
         return {"shared_files": files}
-
     finally:
-        connection.close()
+            connection.close()
 
 
-# -------------------- DOWNLOAD SHARED ENCRYPTED FILE --------------------
-
+# -------------------- DECRYPT SAVED FILE --------------------
 @app.get("/files/shared-with-me/{file_id}/download")
 def download_shared_file(
     file_id: int,
@@ -1091,6 +1509,87 @@ def download_shared_file(
                     + '"'
                 )
             },
+        )
+
+    finally:
+        connection.close()
+        
+# -------------------- MY UPLOADED FILES --------------------
+
+@app.get("/files/my-files")
+def get_my_files(
+    current_user=Depends(get_current_user),
+):
+    connection = get_connection()
+
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT
+                    id,
+                    original_filename,
+                    content_type,
+                    created_at,
+                    OCTET_LENGTH(encrypted_data) AS encrypted_size
+                FROM encrypted_files
+                WHERE user_id = %s
+                ORDER BY created_at DESC
+                """,
+                (current_user["user_id"],),
+            )
+
+            files = cursor.fetchall()
+
+        return {"files": files}
+
+    finally:
+        connection.close()
+
+
+# -------------------- DELETE UPLOADED FILE --------------------
+
+@app.delete("/files/{file_id}")
+def delete_uploaded_file(
+    file_id: int,
+    current_user=Depends(get_current_user),
+):
+    connection = get_connection()
+
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                DELETE FROM encrypted_files
+                WHERE id = %s
+                  AND user_id = %s
+                """,
+                (file_id, current_user["user_id"]),
+            )
+
+            deleted = cursor.rowcount
+
+        connection.commit()
+
+        if deleted == 0:
+            raise HTTPException(
+                status_code=404,
+                detail="File not found or you do not own this file.",
+            )
+
+        return {
+            "message": "File deleted successfully!"
+        }
+
+    except HTTPException:
+        connection.rollback()
+        raise
+
+    except Exception:
+        connection.rollback()
+        raise HTTPException(
+            status_code=500,
+            detail="Could not delete the file.",
         )
 
     finally:
@@ -1174,6 +1673,103 @@ def decrypt_shared_file(
                 ),
                 "X-Integrity-Verified": "true",
             },
+        )
+
+    finally:
+        connection.close()
+
+# -------------------- REMOVE SHARED FILE --------------------
+
+@app.delete("/files/shared-with-me/{file_id}")
+def remove_shared_file(
+    file_id: int,
+    current_user=Depends(get_current_user),
+):
+    connection = get_connection()
+
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                DELETE FROM file_shares
+                WHERE file_id = %s
+                  AND recipient_id = %s
+                """,
+                (file_id, current_user["user_id"]),
+            )
+
+            deleted = cursor.rowcount
+
+        connection.commit()
+
+        if deleted == 0:
+            raise HTTPException(
+                status_code=404,
+                detail="Shared file not found in your account.",
+            )
+
+        return {
+            "message": "Shared file removed from your account successfully!"
+        }
+
+    except HTTPException:
+        connection.rollback()
+        raise
+
+    except Exception:
+        connection.rollback()
+        raise HTTPException(
+            status_code=500,
+            detail="Could not remove shared file.",
+        )
+
+    finally:
+        connection.close()
+
+# -------------------- CLEAR ALL FILES --------------------
+
+@app.delete("/files/clear-all")
+def clear_all_files(
+    current_user=Depends(get_current_user),
+):
+    connection = get_connection()
+
+    try:
+        with connection.cursor() as cursor:
+
+            # Remove files shared with this user
+            cursor.execute(
+                """
+                DELETE FROM file_shares
+                WHERE recipient_id = %s
+                """,
+                (current_user["user_id"],),
+            )
+            shared_count = cursor.rowcount
+
+            # Delete files uploaded by this user
+            cursor.execute(
+                """
+                DELETE FROM encrypted_files
+                WHERE user_id = %s
+                """,
+                (current_user["user_id"],),
+            )
+            uploaded_count = cursor.rowcount
+
+        connection.commit()
+
+        return {
+            "message": "All files cleared from your account.",
+            "uploaded_files_deleted": uploaded_count,
+            "shared_files_removed": shared_count,
+        }
+
+    except Exception:
+        connection.rollback()
+        raise HTTPException(
+            status_code=500,
+            detail="Could not clear files.",
         )
 
     finally:
