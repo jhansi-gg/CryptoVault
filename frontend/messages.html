@@ -2,24 +2,25 @@
 <html lang="en">
 
 <head>
-    <link rel="stylesheet" href="style.css">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CryptoVault | Secure Messaging</title>
+    <link rel="stylesheet" href="style.css">
 
     <style>
         :root {
-            --bg: #07111F;
-            --card: #10243A;
-            --accent: #38BDF8;
-            --text: #F0F9FF;
-            --muted: #A6BDD1;
-            --border: #24415C;
-            --surface: #0B1B2D;
+            --bg: #100D24;
+            --card: rgba(33, 22, 65, 0.88);
+            --accent: #A78BFA;
+            --accent-light: #C4B5FD;
+            --text: #F8FAFC;
+            --muted: #DED5F5;
+            --border: rgba(167, 139, 250, 0.4);
+            --input: rgba(16, 13, 36, 0.9);
             --success: #4ADE80;
-            --danger: #FDA4AF;
+            --danger: #F87171;
+            --surface: rgba(26, 17, 51, 0.95);
         }
-
 
         * {
             box-sizing: border-box;
@@ -29,15 +30,16 @@
         }
 
         body {
+            min-height: 100vh;
             background: var(--bg);
             color: var(--text);
-            min-height: 100vh;
         }
 
         header {
             padding: 22px 7%;
             border-bottom: 1px solid var(--border);
-            background: var(--surface);
+            background: rgba(26, 17, 51, 0.88);
+            backdrop-filter: blur(14px);
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -46,23 +48,28 @@
 
         header h2 {
             letter-spacing: 1px;
+            color: var(--text);
+            font-size: 24px;
         }
 
         header h2 span {
-            color: var(--accent);
+            color: var(--accent-light);
+            text-shadow: 0 0 15px rgba(167, 139, 250, 0.4);
         }
 
         header a {
-            color: var(--accent);
+            color: var(--accent-light);
             text-decoration: none;
-            border: 1px solid var(--accent);
-            border-radius: 7px;
-            padding: 10px 15px;
+            border: 1px solid var(--border);
+            border-radius: 9px;
+            padding: 10px 16px;
+            transition: 0.3s;
         }
 
         header a:hover {
             background: var(--accent);
-            color: var(--bg);
+            color: #100D24;
+            box-shadow: 0 0 18px rgba(167, 139, 250, 0.3);
         }
 
         .container {
@@ -72,25 +79,28 @@
         }
 
         .intro {
-            margin-bottom: 30px;
+            margin-bottom: 32px;
         }
 
         .eyebrow {
-            color: var(--accent);
+            color: var(--accent-light);
             font-size: 12px;
             letter-spacing: 2px;
             font-weight: bold;
-            margin-bottom: 12px;
+            margin-bottom: 13px;
         }
 
         .intro h1 {
             font-size: clamp(28px, 4vw, 36px);
+            color: var(--accent-light);
+            margin-bottom: 10px;
         }
 
         .intro p {
             color: var(--muted);
             margin-top: 10px;
             line-height: 1.7;
+            max-width: 700px;
         }
 
         .grid {
@@ -104,71 +114,94 @@
             min-width: 0;
             background: var(--card);
             border: 1px solid var(--border);
-            border-radius: 14px;
-            padding: 24px;
+            border-radius: 17px;
+            padding: 25px;
+            box-shadow: 0 10px 35px rgba(0, 0, 0, 0.2),
+                0 0 20px rgba(139, 92, 246, 0.07);
+            backdrop-filter: blur(14px);
+            transition: 0.3s ease;
+        }
+
+        .card:hover {
+            border-color: rgba(196, 181, 253, 0.7);
+            box-shadow: 0 12px 35px rgba(124, 58, 237, 0.15);
         }
 
         .card h2 {
             margin-bottom: 20px;
             font-size: 21px;
+            color: var(--accent-light);
         }
 
         label {
             display: block;
-            margin: 15px 0 8px;
-            color: var(--text);
+            margin: 17px 0 9px;
+            color: var(--accent-light);
             font-size: 14px;
+            font-weight: bold;
         }
 
         input,
         select,
         textarea {
             width: 100%;
-            background: var(--bg);
+            background: var(--input);
             color: var(--text);
             border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 12px;
+            border-radius: 10px;
+            padding: 13px;
             font-size: 14px;
+            outline: none;
+            transition: 0.3s;
         }
 
         input::placeholder,
         textarea::placeholder {
-            color: #829DB5;
+            color: #A99BC8;
         }
 
         input:focus,
         select:focus,
         textarea:focus {
-            outline: 2px solid var(--accent);
-            outline-offset: 1px;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(167, 139, 250, 0.13);
+        }
+
+        select option {
+            background: #211641;
+            color: white;
         }
 
         textarea {
-            min-height: 110px;
+            min-height: 120px;
             resize: vertical;
+            line-height: 1.6;
         }
 
         button {
             width: 100%;
-            padding: 12px;
+            padding: 13px;
             margin-top: 16px;
-            background: var(--accent);
-            color: #07111F;
-            border: 1px solid var(--accent);
-            border-radius: 8px;
+            background: linear-gradient(135deg, #7C3AED, #A78BFA);
+            color: white;
+            border: 1px solid transparent;
+            border-radius: 10px;
             font-weight: bold;
+            font-size: 14px;
             cursor: pointer;
-            transition: background .2s, transform .2s;
+            transition: 0.3s ease;
         }
 
-        button:hover {
-            background: #7DD3FC;
+        button:hover:not(:disabled) {
+            background: linear-gradient(135deg, #8B5CF6, #C4B5FD);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(139, 92, 246, 0.3);
         }
 
         button:disabled {
-            opacity: .6;
+            opacity: 0.6;
             cursor: not-allowed;
+            transform: none;
         }
 
         .status {
@@ -180,17 +213,17 @@
         }
 
         .message {
-            padding: 16px;
+            padding: 17px;
             border: 1px solid var(--border);
-            border-radius: 10px;
-            margin-top: 14px;
+            border-radius: 12px;
+            margin-top: 15px;
             background: var(--surface);
             overflow-wrap: anywhere;
         }
 
         .message h3 {
             font-size: 16px;
-            color: var(--accent);
+            color: var(--accent-light);
         }
 
         .message p {
@@ -202,19 +235,20 @@
 
         .encrypted-text {
             margin-top: 10px;
-            padding: 12px;
-            background: var(--bg);
+            padding: 13px;
+            background: var(--input);
             border: 1px solid var(--border);
-            border-radius: 8px;
-            color: var(--text);
+            border-radius: 9px;
+            color: #E9DFFF;
             font-size: 12px;
             line-height: 1.7;
             overflow-wrap: anywhere;
             word-break: break-word;
+            font-family: monospace;
         }
 
         .decrypt-controls {
-            margin-top: 14px;
+            margin-top: 16px;
         }
 
         .decrypt-key {
@@ -222,16 +256,16 @@
         }
 
         .decrypt-btn {
-            background: var(--accent);
-            color: var(--bg);
+            background: linear-gradient(135deg, #7C3AED, #A78BFA);
+            color: white;
         }
 
         .decrypt-result {
-            margin-top: 12px;
-            padding: 12px;
-            background: var(--bg);
+            margin-top: 13px;
+            padding: 13px;
+            background: var(--input);
             border: 1px solid var(--border);
-            border-radius: 8px;
+            border-radius: 9px;
             color: var(--text);
             font-size: 13px;
             line-height: 1.7;
@@ -241,21 +275,32 @@
         }
 
         .decrypt-result.success {
-            border-color: #166534;
+            border-color: rgba(74, 222, 128, 0.5);
+            color: var(--success);
+            background: rgba(74, 222, 128, 0.06);
         }
 
         .decrypt-result.error {
-            border-color: #9F394A;
+            border-color: rgba(248, 113, 113, 0.5);
             color: var(--danger);
+            background: rgba(248, 113, 113, 0.06);
+        }
+
+        .hint {
+            color: var(--muted);
+            font-size: 12px;
+            line-height: 1.6;
+            margin-top: 8px;
         }
 
         .note {
             color: var(--muted);
             font-size: 12px;
             line-height: 1.8;
-            margin-top: 22px;
-            padding: 16px;
+            margin-top: 25px;
+            padding: 17px;
             border-left: 3px solid var(--accent);
+            border-radius: 0 10px 10px 0;
             background: var(--surface);
         }
 
@@ -273,29 +318,44 @@
             }
 
             .card {
-                padding: 18px;
+                padding: 19px;
+            }
+        }
+
+        @media (max-width: 400px) {
+            header h2 {
+                font-size: 19px;
+            }
+
+            header a {
+                padding: 9px 11px;
+                font-size: 13px;
             }
         }
     </style>
 </head>
 
-<body>
+<body class="login-page">
+
     <header>
         <h2>CRYPTO<span>Vault</span></h2>
         <a href="home.html">← Dashboard</a>
     </header>
 
     <main class="container">
+
         <section class="intro">
             <div class="eyebrow">PRIVATE DIGITAL COMMUNICATION</div>
             <h1>Secure Messaging</h1>
             <p>
                 Encrypt your messages before sending and decrypt
                 received messages using the shared key.
+                Keep your communication private with CryptoVault.
             </p>
         </section>
 
         <div class="grid">
+
             <section class="card">
                 <h2>✉ Send Message</h2>
 
@@ -324,10 +384,43 @@
                     Refresh Inbox
                 </button>
 
+                <label for="sharedDecryptKey">
+                    Shared encryption key (enter once)
+                </label>
+                <input id="sharedDecryptKey" class="decrypt-key" type="password"
+                    placeholder="Enter the exact key used by the sender" autocomplete="off">
+
+                <p class="hint">
+                    This key stays only in this page while it is open.
+                    Use the same key that was used to encrypt these messages.
+                </p>
+
                 <div id="inbox" class="status" aria-live="polite">
                     Loading inbox...
                 </div>
             </section>
+
+            <section class="card">
+                <h2>📤 Sent Messages</h2>
+                <div id="sentMessages" class="status" aria-live="polite">
+                    Loading sent messages...
+                </div>
+            </section>
+
+            <section class="card">
+                <h2>🗑 Message Management</h2>
+                <p class="status">
+                    Clear all sent and received messages from your account.
+                    This action cannot be undone for your account.
+                </p>
+
+                <button id="clearAllBtn" type="button">
+                    Clear All Messages
+                </button>
+
+                <div id="managementStatus" class="status" role="status"></div>
+            </section>
+
         </div>
 
         <p class="note">
@@ -336,10 +429,15 @@
             existing backend's AES-GCM endpoint and is not a complete
             end-to-end encrypted messaging system.
         </p>
-    </main>
 
+    </main>
     <script>
-        const API = "https://cryptovault-mysv.onrender.com";
+        const API =
+            (window.location.hostname === "127.0.0.1" ||
+                window.location.hostname === "localhost")
+                ? "http://127.0.0.1:8000"
+                : "https://cryptovault-mysv.onrender.com";
+
         const token = localStorage.getItem("access_token");
 
         if (!token) {
@@ -366,13 +464,13 @@
 
             if (!response.ok) {
                 if (response.status === 401) {
-                    throw new Error(
-                        "Session expired. Please log in again."
-                    );
+                    localStorage.removeItem("access_token");
+                    throw new Error("Session expired. Please log in again.");
                 }
 
                 throw new Error(
-                    data.detail || data.message || "Request failed"
+                    data.detail || data.message ||
+                    `Request failed (${response.status})`
                 );
             }
 
@@ -411,7 +509,6 @@
             } catch (error) {
                 select.innerHTML =
                     '<option value="">Could not load users</option>';
-
                 status.textContent =
                     "User list error: " + error.message;
             }
@@ -420,16 +517,12 @@
         async function sendMessage() {
             const recipient =
                 document.getElementById("recipient").value;
-
             const secret =
                 document.getElementById("secret").value;
-
             const plaintext =
                 document.getElementById("messageText").value;
-
             const status =
                 document.getElementById("sendStatus");
-
             const button =
                 document.getElementById("sendBtn");
 
@@ -472,8 +565,11 @@
                 document.getElementById("messageText").value = "";
                 document.getElementById("secret").value = "";
 
+                await loadSentMessages();
+
             } catch (error) {
-                status.textContent = "Send failed: " + error.message;
+                status.textContent =
+                    "Send failed: " + error.message;
             } finally {
                 button.disabled = false;
             }
@@ -481,13 +577,15 @@
 
         async function loadInbox() {
             const inbox = document.getElementById("inbox");
-            const refreshBtn = document.getElementById("refreshBtn");
+            const refreshBtn =
+                document.getElementById("refreshBtn");
 
             inbox.textContent = "Loading messages...";
             refreshBtn.disabled = true;
 
             try {
-                const data = await apiRequest("/messages/inbox");
+                const data =
+                    await apiRequest("/messages/inbox");
 
                 const messages = Array.isArray(data)
                     ? data
@@ -500,16 +598,14 @@
                     return;
                 }
 
-                messages.forEach((message, index) => {
+                messages.forEach(message => {
                     const card = document.createElement("article");
                     card.className = "message";
 
                     const sender = document.createElement("h3");
-                    sender.textContent =
-                        "From: " +
+                    sender.textContent = "From: " +
                         (message.sender_username ||
-                            message.sender ||
-                            "Unknown");
+                            message.sender || "Unknown");
 
                     const date = document.createElement("p");
                     date.textContent =
@@ -526,41 +622,48 @@
                     const controls = document.createElement("div");
                     controls.className = "decrypt-controls";
 
-                    const keyLabel = document.createElement("label");
-                    keyLabel.htmlFor = "decrypt-key-" + index;
-                    keyLabel.textContent = "Shared encryption key";
-
-                    const keyInput = document.createElement("input");
-                    keyInput.id = "decrypt-key-" + index;
-                    keyInput.className = "decrypt-key";
-                    keyInput.type = "password";
-                    keyInput.autocomplete = "off";
-                    keyInput.placeholder =
-                        "Enter the sender's exact key";
-
-                    const result = document.createElement("div");
-                    result.className = "decrypt-result";
-                    result.hidden = true;
-                    result.setAttribute("role", "status");
-
-                    const decryptButton = document.createElement("button");
+                    const decryptButton =
+                        document.createElement("button");
                     decryptButton.type = "button";
                     decryptButton.className = "decrypt-btn";
                     decryptButton.textContent = "Decrypt Message";
 
+                    const result = document.createElement("div");
+                    result.className = "decrypt-result";
+                    result.style.display = "none";
+
                     decryptButton.addEventListener("click", () => {
-                        decryptMessage(
-                            message,
-                            keyInput,
-                            result,
-                            decryptButton
-                        );
+                        decryptMessage(message, result, decryptButton);
                     });
 
-                    controls.appendChild(keyLabel);
-                    controls.appendChild(keyInput);
+                    const deleteButton =
+                        document.createElement("button");
+                    deleteButton.type = "button";
+                    deleteButton.textContent = "Delete Message";
+
+                    deleteButton.addEventListener("click", async () => {
+                        if (!confirm(
+                            "Delete this message from your inbox?"
+                        )) return;
+
+                        deleteButton.disabled = true;
+
+                        try {
+                            await apiRequest(
+                                `/messages/${message.id}`,
+                                { method: "DELETE" }
+                            );
+
+                            card.remove();
+                        } catch (error) {
+                            alert("Delete failed: " + error.message);
+                            deleteButton.disabled = false;
+                        }
+                    });
+
                     controls.appendChild(decryptButton);
                     controls.appendChild(result);
+                    controls.appendChild(deleteButton);
 
                     card.appendChild(sender);
                     card.appendChild(date);
@@ -572,7 +675,8 @@
                 });
 
             } catch (error) {
-                inbox.textContent = "Inbox error: " + error.message;
+                inbox.textContent =
+                    "Could not load inbox: " + error.message;
             } finally {
                 refreshBtn.disabled = false;
             }
@@ -580,61 +684,180 @@
 
         async function decryptMessage(
             message,
-            keyInput,
             result,
             button
         ) {
-            const secret = keyInput.value;
-
-            result.hidden = false;
-            result.classList.remove("success", "error");
+            const secret =
+                document.getElementById("sharedDecryptKey").value;
 
             if (!secret.trim()) {
-                result.classList.add("error");
+                result.style.display = "block";
+                result.className = "decrypt-result error";
                 result.textContent =
-                    "Please enter the shared encryption key.";
-                keyInput.focus();
-                return;
-            }
-
-            if (!message.ciphertext) {
-                result.classList.add("error");
-                result.textContent =
-                    "This message has no ciphertext.";
+                    "Please enter the shared encryption key above.";
                 return;
             }
 
             button.disabled = true;
-            button.textContent = "Decrypting...";
-            result.textContent = "Decrypting message...";
+            result.style.display = "block";
+            result.className = "decrypt-result";
+            result.textContent =
+                "Verifying signature and decrypting...";
 
             try {
-                const decrypted = await apiRequest("/decrypt", {
-                    method: "POST",
-                    body: JSON.stringify({
-                        ciphertext: message.ciphertext,
-                        secret_key: secret
-                    })
-                });
+                const decrypted = await apiRequest(
+                    `/messages/${message.id}/decrypt`,
+                    {
+                        method: "POST",
+                        body: JSON.stringify({
+                            secret_key: secret
+                        })
+                    }
+                );
 
-                if (decrypted.plaintext === undefined) {
-                    throw new Error(
-                        "The backend response contains no plaintext field."
-                    );
+                result.className = "decrypt-result success";
+                result.textContent =
+                    "Decrypted message:\n" +
+                    (decrypted.plaintext || "No plaintext returned.");
+
+                if (decrypted.signature_valid === false) {
+                    result.className = "decrypt-result error";
+                    result.textContent =
+                        "Warning: Message signature verification failed.\n" +
+                        (decrypted.plaintext || "");
                 }
 
-                result.classList.add("success");
-                result.textContent =
-                    "Decrypted message:\n" + decrypted.plaintext;
-
             } catch (error) {
-                result.classList.add("error");
+                result.className = "decrypt-result error";
                 result.textContent =
-                    "Decryption failed. Check the exact key.\n" +
-                    error.message;
+                    "Decryption failed: " + error.message +
+                    "\nCheck that you entered the exact key used by the sender.";
             } finally {
                 button.disabled = false;
-                button.textContent = "Decrypt Message";
+            }
+        }
+        async function loadSentMessages() {
+            const container =
+                document.getElementById("sentMessages");
+
+            container.textContent = "Loading sent messages...";
+
+            try {
+                const data = await apiRequest("/messages/sent");
+
+                const messages = Array.isArray(data)
+                    ? data
+                    : (data.messages || []);
+
+                container.replaceChildren();
+
+                if (messages.length === 0) {
+                    container.textContent = "No sent messages yet.";
+                    return;
+                }
+
+                messages.forEach(message => {
+                    const card = document.createElement("article");
+                    card.className = "message";
+
+                    const heading = document.createElement("h3");
+                    heading.textContent =
+                        "To: " + (message.recipient_username || "Unknown");
+
+                    const date = document.createElement("p");
+                    date.textContent = message.created_at || "";
+
+                    const label = document.createElement("p");
+                    label.textContent = "Encrypted message:";
+
+                    const encrypted = document.createElement("div");
+                    encrypted.className = "encrypted-text";
+                    encrypted.textContent =
+                        message.ciphertext || "(No ciphertext available)";
+
+                    const deleteButton =
+                        document.createElement("button");
+
+                    deleteButton.type = "button";
+                    deleteButton.textContent = "Delete Message";
+
+                    deleteButton.addEventListener("click", async () => {
+                        if (!confirm(
+                            "Delete this sent message from your account?"
+                        )) return;
+
+                        deleteButton.disabled = true;
+                        deleteButton.textContent = "Deleting...";
+
+                        try {
+                            await apiRequest(
+                                `/messages/${message.id}`,
+                                { method: "DELETE" }
+                            );
+
+                            card.remove();
+
+                            if (!container.querySelector(".message")) {
+                                container.textContent =
+                                    "No sent messages yet.";
+                            }
+                        } catch (error) {
+                            alert("Delete failed: " + error.message);
+                            deleteButton.disabled = false;
+                            deleteButton.textContent = "Delete Message";
+                        }
+                    });
+
+                    card.appendChild(heading);
+                    card.appendChild(date);
+                    card.appendChild(label);
+                    card.appendChild(encrypted);
+                    card.appendChild(deleteButton);
+
+                    container.appendChild(card);
+                });
+
+            } catch (error) {
+                container.textContent =
+                    "Sent messages error: " + error.message;
+            }
+        }
+
+        async function clearAllMessages() {
+            const button =
+                document.getElementById("clearAllBtn");
+
+            const status =
+                document.getElementById("managementStatus");
+
+            if (!confirm(
+                "Are you sure? This will clear all sent and received messages from your account."
+            )) {
+                return;
+            }
+
+            button.disabled = true;
+            button.textContent = "Clearing...";
+            status.textContent = "Clearing your messages...";
+
+            try {
+                const data = await apiRequest(
+                    "/messages/clear-all",
+                    { method: "DELETE" }
+                );
+
+                status.textContent =
+                    data.message || "All messages cleared successfully.";
+
+                await loadInbox();
+                await loadSentMessages();
+
+            } catch (error) {
+                status.textContent =
+                    "Clear failed: " + error.message;
+            } finally {
+                button.disabled = false;
+                button.textContent = "Clear All Messages";
             }
         }
 
@@ -642,11 +865,21 @@
             .addEventListener("click", sendMessage);
 
         document.getElementById("refreshBtn")
-            .addEventListener("click", loadInbox);
+            .addEventListener("click", async () => {
+                await loadInbox();
+                await loadSentMessages();
+            });
 
-        loadUsers();
-        loadInbox();
+        document.getElementById("clearAllBtn")
+            .addEventListener("click", clearAllMessages);
+
+        if (token) {
+            loadUsers();
+            loadInbox();
+            loadSentMessages();
+        }
     </script>
+
 </body>
 
 </html>

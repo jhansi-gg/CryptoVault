@@ -2,20 +2,20 @@
 <html lang="en">
 
 <head>
-    <link rel="stylesheet" href="style.css">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CryptoVault | Encrypt & Decrypt</title>
+    <link rel="stylesheet" href="style.css">
 
     <style>
         :root {
-            --bg: #07111F;
-            --card: #10243A;
-            --accent: #38BDF8;
-            --text: #F0F9FF;
-            --muted: #A6BDD1;
-            --border: #24415C;
-            --input: #0B1B2D;
+            --bg: #100D24;
+            --card: #211641;
+            --accent: #A78BFA;
+            --text: #F8FAFC;
+            --muted: #DED5F5;
+            --border: rgba(167, 139, 250, 0.4);
+            --input: rgba(16, 13, 36, 0.9);
             --success: #4ADE80;
             --error: #F87171;
         }
@@ -29,10 +29,7 @@
 
         body {
             min-height: 100vh;
-            background:
-                radial-gradient(ellipse at top left, #123252 0%, transparent 45%),
-                radial-gradient(ellipse at bottom right, #0C2B43 0%, transparent 40%),
-                var(--bg);
+            background: transparent;
             color: var(--text);
         }
 
@@ -44,7 +41,8 @@
             justify-content: space-between;
             gap: 15px;
             border-bottom: 1px solid var(--border);
-            background: rgba(7, 17, 31, 0.9);
+            background: rgba(16, 13, 36, 0.75);
+            backdrop-filter: blur(15px);
         }
 
         .logo {
@@ -69,9 +67,9 @@
         }
 
         .back-btn:hover {
-            background: var(--accent);
-            color: var(--bg);
-            border-color: var(--accent);
+            background: #7C3AED;
+            color: #FFFFFF;
+            border-color: #A78BFA;
         }
 
         .container {
@@ -122,14 +120,14 @@
             padding: 14px 20px;
             border: 1px solid var(--border);
             border-radius: 8px;
-            background: var(--card);
+            background: rgba(33, 22, 65, 0.88);
             font-size: 13px;
             transition: 0.25s;
         }
 
         .flow-box:hover {
             border-color: var(--accent);
-            box-shadow: 0 0 15px rgba(56, 189, 248, 0.12);
+            box-shadow: 0 0 18px rgba(139, 92, 246, 0.25);
         }
 
         .arrow {
@@ -145,11 +143,12 @@
 
         .panel {
             min-width: 0;
-            background: rgba(16, 36, 58, 0.88);
+            background: rgba(33, 22, 65, 0.88);
             border: 1px solid var(--border);
             border-radius: 14px;
             padding: 28px;
-            box-shadow: 0 12px 35px rgba(0, 0, 0, 0.15);
+            box-shadow: 0 12px 35px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(12px);
         }
 
         .panel h2 {
@@ -193,13 +192,14 @@
 
         textarea::placeholder,
         input::placeholder {
-            color: #7891A8;
+            color: #A99BC8;
         }
 
         textarea:focus,
-        input:focus {
+        input:focus,
+        select:focus {
             border-color: var(--accent);
-            box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.1);
+            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15);
         }
 
         .key-input {
@@ -221,19 +221,19 @@
             width: 100%;
             margin-top: 18px;
             padding: 14px;
-            background: var(--accent);
-            color: #38BDF8;
-            border: 1px solid var(--accent);
+            background: linear-gradient(135deg, #7C3AED, #A78BFA);
+            color: #FFFFFF;
+            border: 1px solid #A78BFA;
             border-radius: 8px;
             font-weight: bold;
             cursor: pointer;
             transition: 0.25s;
         }
 
-        .button:hover {
-            background: #38BDF8;
-            transform: translateY(-1px);
-            box-shadow: 0 5px 18px rgba(56, 189, 248, 0.18);
+        .button:hover:not(:disabled) {
+            background: linear-gradient(135deg, #8B5CF6, #C4B5FD);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(139, 92, 246, 0.3);
         }
 
         .button:disabled {
@@ -254,17 +254,23 @@
             transition: 0.25s;
         }
 
-        .secondary-button:hover {
-            background: var(--card);
+        .secondary-button:hover:not(:disabled) {
+            background: rgba(124, 58, 237, 0.15);
             border-color: var(--accent);
+        }
+
+        .secondary-button:disabled {
+            opacity: 0.6;
+            cursor: wait;
         }
 
         .result {
             margin-top: 30px;
             padding: 25px;
-            background: rgba(16, 36, 58, 0.88);
+            background: rgba(33, 22, 65, 0.88);
             border: 1px solid var(--border);
             border-radius: 14px;
+            backdrop-filter: blur(12px);
         }
 
         .result h2 {
@@ -290,6 +296,7 @@
             color: var(--muted);
             font-size: 12px;
             line-height: 1.6;
+            overflow-wrap: anywhere;
         }
 
         .message.success {
@@ -308,10 +315,81 @@
             color: var(--muted);
             font-size: 11px;
             letter-spacing: 1px;
+            background: rgba(16, 13, 36, 0.5);
+        }
+
+        /* Secure File Sharing */
+
+        .file-sharing-section {
+            margin-top: 30px;
+        }
+
+        .file-sharing-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 25px;
+            margin-top: 20px;
+        }
+
+        .file-select {
+            width: 100%;
+            padding: 13px;
+            background: var(--input);
+            color: var(--text);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+        }
+
+        .file-select option {
+            background: #211641;
+            color: #FFFFFF;
+        }
+
+        .shared-file-list {
+            display: grid;
+            gap: 14px;
+            margin-top: 16px;
+        }
+
+        .shared-file-card {
+            padding: 18px;
+            background: rgba(16, 13, 36, 0.85);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            min-width: 0;
+        }
+
+        .shared-file-card h3 {
+            font-size: 15px;
+            overflow-wrap: anywhere;
+            margin-bottom: 8px;
+        }
+
+        .shared-file-details {
+            color: var(--muted);
+            font-size: 11px;
+            line-height: 1.7;
+            margin-bottom: 14px;
+            overflow-wrap: anywhere;
+        }
+
+        .shared-file-card .key-input,
+        .shared-file-card .button {
+            margin-top: 12px;
+        }
+
+        .empty-state {
+            color: var(--muted);
+            font-size: 12px;
+            padding: 14px;
+            border: 1px dashed var(--border);
+            border-radius: 8px;
         }
 
         @media (max-width: 800px) {
-            .panels {
+
+            .panels,
+            .file-sharing-grid {
                 grid-template-columns: 1fr;
             }
 
@@ -355,83 +433,18 @@
                 font-size: 16px;
             }
         }
-
-        /* ---------- SECURE FILE SHARING ---------- */
-
-        .file-sharing-section {
-            margin-top: 30px;
-        }
-
-        .file-sharing-grid {
-            display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 25px;
-            margin-top: 20px;
-        }
-
-        .file-select {
-            width: 100%;
-            padding: 13px;
-            background: var(--input);
-            color: var(--text);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-        }
-
-        .shared-file-list {
-            display: grid;
-            gap: 14px;
-            margin-top: 16px;
-        }
-
-        .shared-file-card {
-            padding: 18px;
-            background: var(--input);
-            border: 1px solid var(--border);
-            border-radius: 10px;
-        }
-
-        .shared-file-card h3 {
-            font-size: 15px;
-            overflow-wrap: anywhere;
-            margin-bottom: 8px;
-        }
-
-        .shared-file-details {
-            color: var(--muted);
-            font-size: 11px;
-            line-height: 1.7;
-            margin-bottom: 14px;
-        }
-
-        .shared-file-card .key-input,
-        .shared-file-card .button {
-            margin-top: 12px;
-        }
-
-        .empty-state {
-            color: var(--muted);
-            font-size: 12px;
-            padding: 14px;
-            border: 1px dashed var(--border);
-            border-radius: 8px;
-        }
-
-        @media (max-width: 800px) {
-            .file-sharing-grid {
-                grid-template-columns: 1fr;
-            }
-        }
     </style>
 </head>
 
-<body>
+<body class="login-page">
+
     <nav class="navbar">
         <div class="logo">CRYPTO<span>Vault</span></div>
         <button class="back-btn" onclick="goBack()">← Dashboard</button>
     </nav>
 
     <main class="container">
+
         <section class="heading">
             <small>CRYPTOGRAPHIC OPERATIONS</small>
             <h1>🔐 <span>Encrypt &amp; Decrypt</span></h1>
@@ -452,6 +465,7 @@
         </div>
 
         <section class="panels">
+
             <div class="panel">
                 <h2>🔐 Encrypt Message</h2>
                 <p class="panel-description">
@@ -493,31 +507,47 @@
                     🔓 Decrypt Message
                 </button>
             </div>
+
         </section>
 
         <section class="result">
             <h2>📋 Operation Result</h2>
-            <div id="resultText">Your encryption or decryption result will appear here.</div>
+
+            <div id="resultText">
+                Your encryption or decryption result will appear here.
+            </div>
+
             <div id="message" class="message" role="status" aria-live="polite"></div>
-            <button class="secondary-button" onclick="clearAll()">Clear All</button>
+
+            <button class="secondary-button" onclick="clearAll()">
+                Clear All
+            </button>
         </section>
 
-        <!-- ---------- SECURE FILE SHARING ---------- -->
+        <!-- SECURE FILE SHARING -->
+
         <section class="result file-sharing-section" id="fileSharingSection">
+
             <h2>🔗 Secure File Sharing</h2>
+
             <p class="panel-description">
                 Share encrypted files with another registered CryptoVault user
                 and decrypt files shared with you.
             </p>
 
             <div class="file-sharing-grid">
+
+                <!-- SHARE YOUR FILE -->
+
                 <div class="panel">
                     <h2>📤 Share an Encrypted File</h2>
+
                     <p class="panel-description">
                         Select your encrypted file and enter the recipient username.
                     </p>
 
                     <label for="shareFileSelect">Select Encrypted File</label>
+
                     <select id="shareFileSelect" class="file-select">
                         <option value="">Loading your files...</option>
                     </select>
@@ -530,15 +560,28 @@
                     <button class="button" id="shareFileButton" onclick="shareEncryptedFile()">
                         🔗 Share File
                     </button>
+
                     <div id="shareStatus" class="message" role="status" aria-live="polite"></div>
 
                     <button class="secondary-button" type="button" onclick="loadOwnedFiles()">
-                        Refresh My Files
+                        ↻ Refresh My Files
                     </button>
+
+                    <button class="secondary-button" type="button" id="deleteOwnedFileButton"
+                        onclick="deleteSelectedFile()">
+                        🗑 Delete Selected File
+                    </button>
+
+                    <p class="message">
+                        Deleting your original file also removes its shared copies.
+                    </p>
                 </div>
+
+                <!-- FILES SHARED WITH YOU -->
 
                 <div class="panel">
                     <h2>📥 Shared With Me</h2>
+
                     <p class="panel-description">
                         View files shared with your account. Enter the original
                         secret key to decrypt them.
@@ -549,16 +592,20 @@
                     </button>
 
                     <div id="sharedFilesList" class="shared-file-list">
-                        <div class="empty-state">Loading shared files...</div>
+                        <div class="empty-state">
+                            Loading shared files...
+                        </div>
                     </div>
                 </div>
+
             </div>
         </section>
 
     </main>
 
-    <footer>CRYPTOValut • AES-GCM • SECURE COMMUNICATION</footer>
-
+    <footer>
+        CRYPTOVAULT • AES-GCM • SECURE COMMUNICATION
+    </footer>
     <script>
         const API =
             (window.location.hostname === "127.0.0.1" ||
@@ -576,26 +623,73 @@
             window.location.href = "index.html";
         }
 
+        // ---------- COMMON API REQUEST ----------
+
+        async function apiRequest(path, options = {}) {
+            const response = await fetch(`${API}${path}`, {
+                ...options,
+                headers: {
+                    "Authorization": "Bearer " + getToken(),
+                    ...(options.headers || {})
+                }
+            });
+
+            const contentType =
+                response.headers.get("content-type") || "";
+
+            let data = {};
+
+            if (contentType.includes("application/json")) {
+                data = await response.json();
+            } else {
+                const text = await response.text();
+                data = { detail: text };
+            }
+
+            if (!response.ok) {
+                if (response.status === 401) {
+                    localStorage.removeItem("access_token");
+                    window.location.href = "index.html";
+                }
+
+                throw new Error(
+                    data.detail || data.message ||
+                    `Request failed (${response.status})`
+                );
+            }
+
+            return data;
+        }
+
+        // ---------- ENCRYPT MESSAGE ----------
+
         async function encryptMessage() {
-            const plainText = document.getElementById("plainText").value;
-            const key = document.getElementById("encryptKey").value;
+            const plainText =
+                document.getElementById("plainText").value;
+
+            const key =
+                document.getElementById("encryptKey").value;
 
             if (!plainText.trim() || !key) {
-                showMessage("Please enter both plain text and secret key.", "error");
+                showMessage(
+                    "Please enter both plain text and secret key.",
+                    "error"
+                );
                 return;
             }
 
-            const button = document.getElementById("encryptButton");
+            const button =
+                document.getElementById("encryptButton");
+
             button.disabled = true;
 
             try {
                 showMessage("Encrypting message...", "");
 
-                const response = await fetch(`${API}/encrypt`, {
+                const data = await apiRequest("/encrypt", {
                     method: "POST",
                     headers: {
-                        "Content-Type": "application/json",
-                        "Authorization": "Bearer " + getToken()
+                        "Content-Type": "application/json"
                     },
                     body: JSON.stringify({
                         plaintext: plainText,
@@ -603,47 +697,57 @@
                     })
                 });
 
-                const data = await response.json();
+                document.getElementById("cipherText").value =
+                    data.ciphertext;
 
-                if (!response.ok) {
-                    showMessage(data.detail || "Encryption failed.", "error");
-                    return;
-                }
-
-                document.getElementById("cipherText").value = data.ciphertext;
                 document.getElementById("decryptKey").value = key;
+
                 document.getElementById("resultText").textContent =
                     "Encrypted Cipher Text:\n\n" + data.ciphertext;
 
-                showMessage("✓ Encryption successful using AES-256-GCM.", "success");
+                showMessage(
+                    "✓ Encryption successful using AES-256-GCM.",
+                    "success"
+                );
+
             } catch (error) {
                 console.error(error);
-                showMessage("Cannot connect to the encryption server. Check that your backend is running.", "error");
+                showMessage(error.message, "error");
+
             } finally {
                 button.disabled = false;
             }
         }
 
+        // ---------- DECRYPT MESSAGE ----------
+
         async function decryptMessage() {
-            const cipherText = document.getElementById("cipherText").value.trim();
-            const key = document.getElementById("decryptKey").value;
+            const cipherText =
+                document.getElementById("cipherText").value.trim();
+
+            const key =
+                document.getElementById("decryptKey").value;
 
             if (!cipherText || !key) {
-                showMessage("Please enter both cipher text and secret key.", "error");
+                showMessage(
+                    "Please enter both cipher text and secret key.",
+                    "error"
+                );
                 return;
             }
 
-            const button = document.getElementById("decryptButton");
+            const button =
+                document.getElementById("decryptButton");
+
             button.disabled = true;
 
             try {
                 showMessage("Decrypting message...", "");
 
-                const response = await fetch(`${API}/decrypt`, {
+                const data = await apiRequest("/decrypt", {
                     method: "POST",
                     headers: {
-                        "Content-Type": "application/json",
-                        "Authorization": "Bearer " + getToken()
+                        "Content-Type": "application/json"
                     },
                     body: JSON.stringify({
                         ciphertext: cipherText,
@@ -651,110 +755,190 @@
                     })
                 });
 
-                const data = await response.json();
-
-                if (!response.ok) {
-                    showMessage(data.detail || "Decryption failed. Check your cipher text and secret key.", "error");
-                    return;
-                }
-
                 document.getElementById("resultText").textContent =
                     "Decrypted Plain Text:\n\n" + data.plaintext;
 
-                document.getElementById("plainText").value = data.plaintext;
+                document.getElementById("plainText").value =
+                    data.plaintext;
 
-                showMessage("✓ Decryption successful using AES-256-GCM.", "success");
+                showMessage(
+                    "✓ Decryption successful using AES-256-GCM.",
+                    "success"
+                );
+
             } catch (error) {
                 console.error(error);
-                showMessage("Cannot connect to the decryption server. Check that your backend is running.", "error");
+                showMessage(error.message, "error");
+
             } finally {
                 button.disabled = false;
             }
         }
+
+        // ---------- CLEAR TEXT FIELDS ----------
 
         function clearAll() {
             document.getElementById("plainText").value = "";
             document.getElementById("cipherText").value = "";
             document.getElementById("encryptKey").value = "";
             document.getElementById("decryptKey").value = "";
+
             document.getElementById("resultText").textContent =
                 "Your encryption or decryption result will appear here.";
+
             showMessage("", "");
         }
 
         function showMessage(text, type = "") {
-            const element = document.getElementById("message");
+            const element =
+                document.getElementById("message");
+
             element.textContent = text;
-            element.className = "message" + (type ? " " + type : "");
+            element.className =
+                "message" + (type ? " " + type : "");
         }
 
         function goBack() {
             window.location.href = "home.html";
         }
 
-
-        // ---------- SECURE FILE SHARING ----------
+        // ---------- FILE SHARING STATUS ----------
 
         function showShareStatus(text, type = "") {
-            const element = document.getElementById("shareStatus");
+            const element =
+                document.getElementById("shareStatus");
+
             element.textContent = text;
-            element.className = "message" + (type ? " " + type : "");
+            element.className =
+                "message" + (type ? " " + type : "");
         }
 
+        // ---------- LOAD MY ENCRYPTED FILES ----------
+
         async function loadOwnedFiles() {
-            const select = document.getElementById("shareFileSelect");
-            select.innerHTML = '<option value="">Loading files...</option>';
+            const select =
+                document.getElementById("shareFileSelect");
+
+            select.innerHTML =
+                '<option value="">Loading files...</option>';
 
             try {
-                const response = await fetch(`${API}/files`, {
-                    headers: {
-                        "Authorization": "Bearer " + getToken()
-                    }
-                });
+                const data =
+                    await apiRequest("/files/my-files");
 
-                const data = await response.json();
-
-                if (!response.ok) {
-                    select.innerHTML =
-                        '<option value="">Unable to load files</option>';
-                    showShareStatus(
-                        data.detail || "Could not load your files.", "error"
-                    );
-                    return;
-                }
+                const files = Array.isArray(data)
+                    ? data
+                    : (data.files || []);
 
                 select.innerHTML =
                     '<option value="">Select an encrypted file</option>';
 
-                const files = data.files || [];
-
                 files.forEach(file => {
-                    const option = document.createElement("option");
+                    const option =
+                        document.createElement("option");
+
                     option.value = file.id;
+
                     option.textContent =
-                        `${file.original_filename} (ID: ${file.id})`;
+                        `${file.original_filename || "Encrypted file"} (ID: ${file.id})`;
+
                     select.appendChild(option);
                 });
 
                 if (files.length === 0) {
                     select.innerHTML =
                         '<option value="">No encrypted files found</option>';
+
+                    showShareStatus(
+                        "You do not have any encrypted files yet.",
+                        ""
+                    );
+                } else {
+                    showShareStatus(
+                        `${files.length} encrypted file(s) loaded.`,
+                        "success"
+                    );
                 }
+
             } catch (error) {
                 console.error(error);
+
                 select.innerHTML =
-                    '<option value="">Server connection failed</option>';
+                    '<option value="">Unable to load files</option>';
+
                 showShareStatus(
-                    "Cannot connect to the file service.", "error"
+                    "Could not load your files: " + error.message,
+                    "error"
                 );
             }
         }
 
+        // ---------- DELETE MY ENCRYPTED FILE ----------
+
+        async function deleteSelectedFile() {
+            const fileId =
+                document.getElementById("shareFileSelect").value;
+
+            const button =
+                document.getElementById("deleteOwnedFileButton");
+
+            if (!fileId) {
+                showShareStatus(
+                    "Please select a file to delete.",
+                    "error"
+                );
+                return;
+            }
+
+            const confirmed = confirm(
+                "Are you sure you want to permanently delete this encrypted file?\n\nAny shared copies of this file will also be removed."
+            );
+
+            if (!confirmed) return;
+
+            button.disabled = true;
+            button.textContent = "Deleting...";
+
+            try {
+                const data = await apiRequest(
+                    `/files/${encodeURIComponent(fileId)}`,
+                    {
+                        method: "DELETE"
+                    }
+                );
+
+                showShareStatus(
+                    data.message || "Encrypted file deleted successfully.",
+                    "success"
+                );
+
+                await loadOwnedFiles();
+                await loadSharedFiles();
+
+            } catch (error) {
+                console.error(error);
+
+                showShareStatus(
+                    "Delete failed: " + error.message,
+                    "error"
+                );
+
+            } finally {
+                button.disabled = false;
+                button.textContent = "🗑 Delete Selected File";
+            }
+        }
+
+        // ---------- SHARE ENCRYPTED FILE ----------
+
         async function shareEncryptedFile() {
             const fileId =
                 document.getElementById("shareFileSelect").value;
+
             const recipient =
-                document.getElementById("recipientUsername").value.trim();
+                document.getElementById("recipientUsername")
+                    .value.trim();
+
             const button =
                 document.getElementById("shareFileButton");
 
@@ -769,15 +953,14 @@
             button.disabled = true;
 
             try {
-                showShareStatus("Sharing encrypted file...");
+                showShareStatus("Sharing encrypted file...", "");
 
-                const response = await fetch(
-                    `${API}/files/${encodeURIComponent(fileId)}/share`,
+                const data = await apiRequest(
+                    `/files/${encodeURIComponent(fileId)}/share`,
                     {
                         method: "POST",
                         headers: {
-                            "Content-Type": "application/json",
-                            "Authorization": "Bearer " + getToken()
+                            "Content-Type": "application/json"
                         },
                         body: JSON.stringify({
                             recipient_username: recipient
@@ -785,139 +968,227 @@
                     }
                 );
 
-                const data = await response.json();
-
-                if (!response.ok) {
-                    showShareStatus(
-                        data.detail || "File sharing failed.", "error"
-                    );
-                    return;
-                }
-
                 showShareStatus(
-                    `✓ ${data.filename} shared successfully with ${data.shared_with}.`,
+                    `✓ ${data.filename || "File"} shared successfully with ${data.shared_with || recipient}.`,
                     "success"
                 );
+
                 document.getElementById("recipientUsername").value = "";
+
+                await loadOwnedFiles();
+
             } catch (error) {
                 console.error(error);
+
                 showShareStatus(
-                    "Cannot connect to the sharing service.", "error"
+                    "File sharing failed: " + error.message,
+                    "error"
                 );
+
             } finally {
                 button.disabled = false;
             }
         }
+        // ---------- LOAD FILES SHARED WITH ME ----------
 
         async function loadSharedFiles() {
             const container =
                 document.getElementById("sharedFilesList");
+
             container.textContent = "Loading shared files...";
 
             try {
-                const response = await fetch(
-                    `${API}/files/shared-with-me`,
-                    {
-                        headers: {
-                            "Authorization": "Bearer " + getToken()
-                        }
-                    }
-                );
+                const data =
+                    await apiRequest("/files/shared-with-me");
 
-                const data = await response.json();
+                const files = Array.isArray(data)
+                    ? data
+                    : (data.shared_files || []);
 
-                if (!response.ok) {
-                    container.textContent =
-                        data.detail || "Could not load shared files.";
-                    return;
-                }
-
-                container.innerHTML = "";
-                const files = data.shared_files || [];
+                container.replaceChildren();
 
                 if (files.length === 0) {
-                    const empty = document.createElement("div");
+                    const empty =
+                        document.createElement("div");
+
                     empty.className = "empty-state";
                     empty.textContent =
                         "No files have been shared with you yet.";
+
                     container.appendChild(empty);
                     return;
                 }
 
                 files.forEach(file => {
-                    const card = document.createElement("div");
+                    const card =
+                        document.createElement("div");
+
                     card.className = "shared-file-card";
 
-                    const title = document.createElement("h3");
+                    const title =
+                        document.createElement("h3");
+
                     title.textContent =
                         `🔒 ${file.original_filename || "Shared file"}`;
 
-                    const details = document.createElement("p");
+                    const details =
+                        document.createElement("p");
+
                     details.className = "shared-file-details";
+
                     const sharedDate = file.shared_at
                         ? new Date(file.shared_at).toLocaleString()
                         : "Date unavailable";
-                    details.textContent =
-                        `File ID: ${file.id} · Shared by: ${file.shared_by} · ${sharedDate}`;
 
-                    const label = document.createElement("label");
+                    details.textContent =
+                        `File ID: ${file.id} · Shared by: ${file.shared_by || "Unknown"} · ${sharedDate}`;
+
+                    const label =
+                        document.createElement("label");
+
                     label.textContent = "Original Secret Key";
 
-                    const keyInput = document.createElement("input");
+                    const keyInput =
+                        document.createElement("input");
+
                     keyInput.type = "password";
                     keyInput.placeholder =
                         "Enter the key used by the sender";
+
                     keyInput.autocomplete = "off";
 
-                    const button = document.createElement("button");
-                    button.className = "button";
-                    button.type = "button";
-                    button.textContent = "🔓 Decrypt & Download";
+                    const decryptButton =
+                        document.createElement("button");
 
-                    const status = document.createElement("div");
+                    decryptButton.className = "button";
+                    decryptButton.type = "button";
+                    decryptButton.textContent =
+                        "🔓 Decrypt & Download";
+
+                    const status =
+                        document.createElement("div");
+
                     status.className = "message";
                     status.setAttribute("role", "status");
                     status.setAttribute("aria-live", "polite");
 
-                    button.addEventListener("click", () => {
+                    decryptButton.addEventListener("click", () => {
                         decryptSharedFile(
                             file.id,
                             file.original_filename,
                             keyInput,
-                            button,
+                            decryptButton,
                             status
                         );
                     });
 
+                    // REMOVE SHARED ACCESS
+
+                    const removeButton =
+                        document.createElement("button");
+
+                    removeButton.className = "secondary-button";
+                    removeButton.type = "button";
+
+                    removeButton.textContent =
+                        "🗑 Remove Shared File";
+
+                    removeButton.addEventListener("click", async () => {
+                        const confirmed = confirm(
+                            "Remove this shared file from your account?\n\nThe sender's original file will NOT be deleted."
+                        );
+
+                        if (!confirmed) return;
+
+                        removeButton.disabled = true;
+                        removeButton.textContent = "Removing...";
+
+                        try {
+                            const result = await apiRequest(
+                                `/files/shared-with-me/${encodeURIComponent(file.id)}`,
+                                {
+                                    method: "DELETE"
+                                }
+                            );
+
+                            card.remove();
+
+                            if (!container.querySelector(
+                                ".shared-file-card"
+                            )) {
+                                container.innerHTML =
+                                    '<div class="empty-state">No shared files available.</div>';
+                            }
+
+                            showShareStatus(
+                                result.message ||
+                                "Shared file removed from your account.",
+                                "success"
+                            );
+
+                        } catch (error) {
+                            console.error(error);
+
+                            status.textContent =
+                                "Remove failed: " + error.message;
+
+                            status.className = "message error";
+
+                            removeButton.disabled = false;
+                            removeButton.textContent =
+                                "🗑 Remove Shared File";
+                        }
+                    });
+
                     card.append(
-                        title, details, label, keyInput, button, status
+                        title,
+                        details,
+                        label,
+                        keyInput,
+                        decryptButton,
+                        status,
+                        removeButton
                     );
+
                     container.appendChild(card);
                 });
+
             } catch (error) {
                 console.error(error);
+
                 container.textContent =
-                    "Cannot connect to the shared files service.";
+                    "Could not load shared files: " + error.message;
             }
         }
 
+        // ---------- DECRYPT SHARED FILE ----------
+
         async function decryptSharedFile(
-            fileId, filename, keyInput, button, status
+            fileId,
+            filename,
+            keyInput,
+            button,
+            status
         ) {
             const secretKey = keyInput.value;
 
             if (!secretKey) {
                 status.textContent =
                     "Please enter the original secret key.";
+
                 status.className = "message error";
                 return;
             }
 
             const formData = new FormData();
+
             formData.append("secret_key", secretKey);
+
             button.disabled = true;
+
             status.textContent =
                 "Decrypting file and checking integrity...";
+
             status.className = "message";
 
             try {
@@ -935,10 +1206,17 @@
                 if (!response.ok) {
                     let errorMessage =
                         "Decryption failed. Check the original secret key.";
+
                     try {
                         const errorData = await response.json();
-                        errorMessage = errorData.detail || errorMessage;
-                    } catch (_) { }
+
+                        errorMessage =
+                            errorData.detail || errorMessage;
+
+                    } catch (_) {
+                        // Keep the default error message.
+                    }
+
                     status.textContent = errorMessage;
                     status.className = "message error";
                     return;
@@ -946,44 +1224,63 @@
 
                 const integrityVerified =
                     response.headers.get("X-Integrity-Verified") === "true";
+
+                if (!integrityVerified) {
+                    status.textContent =
+                        "Integrity verification was not confirmed. The file was not downloaded.";
+
+                    status.className = "message error";
+                    return;
+                }
+
                 const fileBlob = await response.blob();
-                const downloadUrl = URL.createObjectURL(fileBlob);
-                const link = document.createElement("a");
+
+                const downloadUrl =
+                    URL.createObjectURL(fileBlob);
+
+                const link =
+                    document.createElement("a");
+
                 link.href = downloadUrl;
                 link.download = filename || "decrypted_file";
+
                 document.body.appendChild(link);
                 link.click();
                 link.remove();
 
-                setTimeout(() => URL.revokeObjectURL(downloadUrl), 1000);
+                setTimeout(() => {
+                    URL.revokeObjectURL(downloadUrl);
+                }, 1000);
 
-                if (integrityVerified) {
-                    status.textContent =
-                        "✓ Decryption successful. File integrity verified.";
-                    status.className = "message success";
-                } else {
-                    status.textContent =
-                        "File downloaded, but integrity verification was not confirmed.";
-                    status.className = "message error";
-                }
+                status.textContent =
+                    "✓ Decryption successful. File integrity verified.";
+
+                status.className = "message success";
+
             } catch (error) {
                 console.error(error);
+
                 status.textContent =
-                    "Cannot connect to the decryption service.";
+                    "Cannot connect to the decryption service: " +
+                    error.message;
+
                 status.className = "message error";
+
             } finally {
                 keyInput.value = "";
                 button.disabled = false;
             }
         }
 
-        // Load both lists after the page has authenticated the user.
+        // ---------- INITIAL PAGE LOAD ----------
+
         if (currentToken) {
             loadOwnedFiles();
             loadSharedFiles();
         }
 
     </script>
+
 </body>
 
 </html>

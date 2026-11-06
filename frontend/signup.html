@@ -1,17 +1,17 @@
 <!DOCTYPE html>
-
 <html lang="en">
 
 <head>
-    <link rel="stylesheet" href="style.css">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Create Account | CryptoVault</title>
+
+    <link rel="stylesheet" href="style.css">
+
     <style>
         * {
             box-sizing: border-box;
         }
-
 
         body {
             margin: 0;
@@ -19,8 +19,8 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            background: #080b12;
-            color: #f5f7fb;
+            background: #100D24;
+            color: #F8FAFC;
             font-family: Arial, sans-serif;
             padding: 20px;
         }
@@ -29,103 +29,151 @@
             width: 100%;
             max-width: 420px;
             padding: 32px;
-            background: #111827;
-            border: 1px solid #263449;
+            background: rgba(33, 22, 65, 0.90);
+            border: 1px solid rgba(167, 139, 250, 0.45);
             border-radius: 16px;
+            box-shadow: 0 24px 70px rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(15px);
+            position: relative;
+            z-index: 1;
         }
 
         h1 {
             text-align: center;
             margin-bottom: 8px;
+            color: #F8FAFC;
         }
 
         .subtitle {
             text-align: center;
-            color: #9ca9bb;
+            color: #DED5F5;
             margin-bottom: 28px;
         }
 
         label {
             display: block;
             margin: 16px 0 8px;
+            color: #F8FAFC;
+            font-size: 14px;
         }
 
         input {
             width: 100%;
             padding: 12px;
             border-radius: 8px;
-            border: 1px solid #34445b;
-            background: #080b12;
-            color: white;
+            border: 1px solid rgba(167, 139, 250, 0.45);
+            background: #100D24;
+            color: #F8FAFC;
             font-size: 15px;
+            transition: 0.3s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #8B5CF6;
+            box-shadow: 0 0 12px rgba(139, 92, 246, 0.3);
+        }
+
+        input::placeholder {
+            color: #A99BC9;
         }
 
         button {
             width: 100%;
             margin-top: 24px;
             padding: 13px;
-            border: none;
+            border: 1px solid #8B5CF6;
             border-radius: 8px;
-            background: #2878f0;
+            background: #8B5CF6;
             color: white;
             font-size: 16px;
             font-weight: bold;
             cursor: pointer;
+            transition: 0.3s;
+        }
+
+        button:hover {
+            background: #7C3AED;
+            box-shadow: 0 0 20px rgba(139, 92, 246, 0.5);
+            transform: translateY(-2px);
         }
 
         button:disabled {
             opacity: 0.6;
             cursor: wait;
+            transform: none;
         }
 
         #message {
             margin-top: 16px;
             text-align: center;
             overflow-wrap: anywhere;
+            font-size: 13px;
+            line-height: 1.6;
         }
 
         a {
-            color: #65a5ff;
+            color: #C4B5FD;
             text-decoration: none;
+            transition: 0.3s;
+        }
+
+        a:hover {
+            color: #FFFFFF;
+            text-decoration: underline;
         }
 
         .footer {
             text-align: center;
             margin-top: 22px;
-            color: #aab5c5;
+            color: #DED5F5;
+            font-size: 14px;
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 25px 20px;
+            }
         }
     </style>
-
-
 </head>
 
-<body>
-    <main class="container">
-        <h1>Create Account</h1>
-        <p class="subtitle">Join CryptoVault Secure Communication</p>
+<body class="login-page">
 
+    <main class="container">
+
+        <h1>Create Account</h1>
+
+        <p class="subtitle">
+            Join CryptoVault Secure Communication
+        </p>
 
         <form id="signupForm">
+
             <label for="username">Username</label>
-            <input id="username" name="username" type="text" required minlength="3" autocomplete="username">
+            <input id="username" name="username" type="text" placeholder="Enter username" required minlength="3"
+                autocomplete="username">
 
             <label for="email">Email</label>
-            <input id="email" name="email" type="email" required autocomplete="email">
+            <input id="email" name="email" type="email" placeholder="Enter email address" required autocomplete="email">
 
             <label for="password">Password</label>
-            <input id="password" name="password" type="password" required minlength="8" autocomplete="new-password">
+            <input id="password" name="password" type="password" placeholder="Create a password" required minlength="8"
+                autocomplete="new-password">
 
             <button id="submitButton" type="submit">
-                Create Account
+                Create Account →
             </button>
+
         </form>
 
-        <p id="message" role="status"></p>
+        <p id="message" role="status" aria-live="polite"></p>
 
         <p class="footer">
             Already have an account?
             <a href="index.html">Sign in</a>
         </p>
+
     </main>
 
     <script>
@@ -133,7 +181,14 @@
         const message = document.getElementById("message");
         const submitButton = document.getElementById("submitButton");
 
+        const API =
+            (window.location.hostname === "127.0.0.1" ||
+                window.location.hostname === "localhost")
+                ? "http://127.0.0.1:8000"
+                : "https://cryptovault-mysv.onrender.com";
+
         form.addEventListener("submit", async function (event) {
+
             event.preventDefault();
 
             message.textContent = "";
@@ -146,16 +201,14 @@
             };
 
             try {
-                const response = await fetch(
-                    "https://cryptovault-mysv.onrender.com/signup",
-                    {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/json"
-                        },
-                        body: JSON.stringify(payload)
-                    }
-                );
+
+                const response = await fetch(`${API}/signup`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(payload)
+                });
 
                 const result = await response.json();
 
@@ -165,7 +218,8 @@
                     );
                 }
 
-                message.style.color = "#4ade80";
+                message.style.color = "#4ADE80";
+
                 message.textContent =
                     result.message || "Account created successfully!";
 
@@ -176,17 +230,21 @@
                 }, 1500);
 
             } catch (error) {
-                message.style.color = "#f87171";
+
+                message.style.color = "#FDA4AF";
+
                 message.textContent =
                     error.message === "Failed to fetch"
-                        ? "Cannot connect to the backend. Check that FastAPI is running."
+                        ? "Cannot connect to the backend. Check your connection."
                         : error.message;
+
             } finally {
+
                 submitButton.disabled = false;
+
             }
         });
     </script>
-
 
 </body>
 

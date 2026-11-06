@@ -1,13 +1,24 @@
-/* CryptoVault - Global Background */
+/* =========================================
+   CryptoVault - Global Midnight Purple Theme
+   Animated Glowing Background
+   Dashboard Excluded
+========================================= */
 
 :root {
-    --bg: #07111F;
-    --card: #10243A;
-    --accent: #38BDF8;
-    --text: #F0F9FF;
-    --muted: #A6BDD1;
-    --border: #24415C;
-    --surface: #0B1B2D;
+    --bg: #100D24;
+    --card: #211641;
+    --accent: #8B5CF6;
+    --secondary: #C4B5FD;
+    --text: #F8FAFC;
+    --muted: #DED5F5;
+    --border: rgba(167, 139, 250, 0.45);
+    --surface: #18112F;
+    --success: #4ADE80;
+    --danger: #FDA4AF;
+}
+
+* {
+    box-sizing: border-box;
 }
 
 html {
@@ -16,62 +27,336 @@ html {
 
 body {
     position: relative;
+    isolation: isolate;
     min-height: 100vh;
-    color: var(--text);
-    background: var(--bg);
+    background: var(--bg) !important;
+    color: var(--text) !important;
     overflow-x: hidden;
 }
 
-/* Flowing blue glow only on pages after login */
-body:not(.login-page)::before {
+/* =========================================
+   ANIMATED GLOWING BACKGROUND
+   All pages except Dashboard
+========================================= */
+
+body:not(.dashboard-page)::before {
     content: "";
     position: fixed;
-    inset: -100%;
-    z-index: 0;
+    inset: -30%;
+    z-index: -1;
     pointer-events: none;
 
-    background: linear-gradient(120deg,
-            transparent 15%,
-            rgba(15, 52, 96, 0.18) 30%,
-            rgba(30, 100, 170, 0.28) 45%,
-            rgba(20, 75, 140, 0.24) 60%,
-            transparent 80%);
+    background:
+        radial-gradient(ellipse at 20% 30%,
+            rgba(139, 92, 246, 0.55), transparent 38%),
+        radial-gradient(ellipse at 75% 70%,
+            rgba(124, 58, 237, 0.48), transparent 42%),
+        radial-gradient(ellipse at 50% 50%,
+            rgba(91, 33, 182, 0.30), transparent 50%);
 
-    background-size: 200% 200%;
-    animation: flowingGlow 12s ease-in-out infinite alternate;
+    filter: blur(65px);
+
+    animation: purpleCloudOne 15s ease-in-out infinite alternate;
 }
 
-@keyframes flowingGlow {
+body:not(.dashboard-page)::after {
+    content: "";
+    position: fixed;
+    inset: -30%;
+    z-index: -1;
+    pointer-events: none;
+
+    background:
+        radial-gradient(ellipse at 75% 20%,
+            rgba(196, 181, 253, 0.40), transparent 35%),
+        radial-gradient(ellipse at 25% 80%,
+            rgba(109, 40, 217, 0.45), transparent 40%),
+        radial-gradient(ellipse at 50% 15%,
+            rgba(167, 139, 250, 0.25), transparent 45%);
+
+    filter: blur(75px);
+
+    animation: purpleCloudTwo 19s ease-in-out infinite alternate;
+}
+
+/* Moving cloud animation */
+
+@keyframes purpleCloudOne {
     0% {
-        transform: translate(-12%, -5%);
-        opacity: 0.65;
+        transform: translate(-7%, -5%) scale(0.95);
     }
 
-    50% {
-        transform: translate(8%, 5%);
-        opacity: 1;
+    35% {
+        transform: translate(5%, 4%) scale(1.08);
+    }
+
+    70% {
+        transform: translate(8%, -4%) scale(1.12);
     }
 
     100% {
-        transform: translate(15%, -5%);
-        opacity: 0.75;
+        transform: translate(-3%, 9%) scale(1.04);
     }
 }
 
+@keyframes purpleCloudTwo {
+    0% {
+        transform: translate(7%, 5%) scale(1.08);
+    }
+
+    40% {
+        transform: translate(-7%, -6%) scale(0.96);
+    }
+
+    75% {
+        transform: translate(4%, 7%) scale(1.12);
+    }
+
+    100% {
+        transform: translate(-6%, -3%) scale(1.02);
+    }
+}
+
+/* =========================================
+   HEADERS AND NAVIGATION
+========================================= */
+
+header {
+    background: rgba(26, 17, 51, 0.82) !important;
+    border-color: var(--border) !important;
+    backdrop-filter: blur(14px);
+}
+
+header h2,
+header .logo,
+.brand,
+.logo {
+    color: var(--text);
+}
+
+header h2 span,
+.logo span,
+.brand span {
+    color: var(--secondary) !important;
+}
+
+/* =========================================
+   CARDS AND PANELS
+========================================= */
+
+.card,
+.login-card,
+.activity-item {
+    background: rgba(33, 22, 65, 0.88) !important;
+    border-color: var(--border) !important;
+    color: var(--text) !important;
+
+    box-shadow:
+        0 18px 50px rgba(0, 0, 0, 0.25),
+        0 0 25px rgba(139, 92, 246, 0.08);
+
+    backdrop-filter: blur(14px);
+}
+
+.banner {
+    background: linear-gradient(110deg,
+            #30205A,
+            #18112F) !important;
+
+    border-color: var(--border) !important;
+}
+
+/* =========================================
+   HEADINGS AND TEXT
+========================================= */
+
+h1,
+h2,
+h3,
+strong,
+label {
+    color: var(--text);
+}
+
+.eyebrow,
+.blue,
+.value,
+.brand,
+.card-heading span {
+    color: var(--secondary) !important;
+}
+
+p,
+.muted,
+.description,
+.subtitle,
+.card-subtitle,
+.notice,
+.status {
+    color: var(--muted);
+}
+
+/* =========================================
+   INPUTS
+========================================= */
+
+input,
+textarea,
+select {
+    background: #100D24 !important;
+    color: var(--text) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 9px;
+}
+
+input::placeholder,
+textarea::placeholder {
+    color: #A99BCB !important;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+    outline: none;
+    border-color: var(--accent) !important;
+
+    box-shadow:
+        0 0 15px rgba(139, 92, 246, 0.25);
+}
+
+/* =========================================
+   BUTTONS
+========================================= */
+
 button,
-a,
-.feature-card {
+.login-button {
+    background: var(--accent) !important;
+    color: #FFFFFF !important;
+    border: 1px solid var(--accent) !important;
+    border-radius: 9px;
+    font-weight: bold;
+    cursor: pointer;
     transition: all 0.25s ease;
 }
 
+button:hover:not(:disabled),
+.login-button:hover {
+    background: #7C3AED !important;
+    border-color: #C4B5FD !important;
+
+    transform: translateY(-2px);
+
+    box-shadow:
+        0 7px 22px rgba(139, 92, 246, 0.25);
+}
+
+button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* =========================================
+   LINKS
+========================================= */
+
+a {
+    color: var(--secondary);
+    transition: color 0.2s ease;
+}
+
+a:hover {
+    color: #FFFFFF;
+}
+
+/* =========================================
+   MESSAGE AND RESULT PANELS
+========================================= */
+
+.message,
+.result,
+.decrypt-result,
+.encrypted-text {
+    background: rgba(16, 13, 36, 0.88) !important;
+    border-color: var(--border) !important;
+    color: var(--text);
+}
+
+.security-point {
+    background: rgba(139, 92, 246, 0.17) !important;
+    border-color: var(--border) !important;
+    color: var(--text);
+}
+
+/* =========================================
+   LOGIN PAGE
+========================================= */
+
+.login-card {
+    background: rgba(33, 22, 65, 0.88) !important;
+}
+
+.security-icon {
+    background: #211641 !important;
+    border-color: var(--accent) !important;
+
+    box-shadow:
+        0 0 35px rgba(139, 92, 246, 0.2);
+}
+
+.login-button {
+    color: #FFFFFF !important;
+}
+
+/* =========================================
+   STATUS COLORS
+========================================= */
+
+.success {
+    color: var(--success) !important;
+}
+
+.error {
+    color: var(--danger) !important;
+}
+
+/* =========================================
+   SMOOTH TRANSITIONS
+========================================= */
+
+button,
+a,
+.card,
+.login-card,
+.activity-item {
+    transition: all 0.25s ease;
+}
+
+/* =========================================
+   MOBILE RESPONSIVENESS
+========================================= */
+
+@media (max-width: 750px) {
+    header {
+        flex-wrap: wrap;
+    }
+}
+
+/* =========================================
+   ACCESSIBILITY
+========================================= */
+
 @media (prefers-reduced-motion: reduce) {
-    body::before {
-        animation: none;
+
+    body:not(.dashboard-page)::before,
+    body:not(.dashboard-page)::after {
+        animation: none !important;
     }
 
     *,
     *::before,
     *::after {
         transition-duration: 0.01ms !important;
+        animation-duration: 0.01ms !important;
     }
 }

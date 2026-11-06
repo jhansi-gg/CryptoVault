@@ -23,16 +23,24 @@ from database import get_connection, init_db
 import mimetypes
 from cryptography.exceptions import InvalidTag
 
+
 app = FastAPI(title="CryptoVault Secure Communication")
 
 app.add_middleware(
     CORSMiddleware,
-   allow_origins=[
-    "http://127.0.0.1:5500",
-    "http://localhost:5500",
-    "https://cryptovault-frontend-7uuo.vercel.app",
-    "https://cryptovault-frontend-h965.vercel.app",
-],
+    allow_origins=[
+        "http://127.0.0.1:5500",
+        "http://localhost:5500",
+
+        # Previous Vercel domains
+        "https://cryptovault-frontend-7uuo.vercel.app",
+        "https://cryptovault-frontend-h965.vercel.app",
+
+        # Current Vercel domains
+        "https://cryptovault-frontend-lmke.vercel.app",
+        "https://cryptovault-frontend-lmke-git-main-terra-mind-ai1.vercel.app",
+        "https://cryptovault-frontend-lmke-gk5x17nrp-terra-mind-ai1.vercel.app",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

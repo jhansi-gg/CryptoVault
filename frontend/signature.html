@@ -1,177 +1,346 @@
-html
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
-    <link rel="stylesheet" href="style.css">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Digital Signatures | CryptoVault</title>
+    <link rel="stylesheet" href="style.css">
+
     <style>
         * {
             box-sizing: border-box;
         }
 
+        :root {
+            --bg: #100D24;
+            --card: rgba(33, 22, 65, 0.88);
+            --accent: #A78BFA;
+            --accent-light: #C4B5FD;
+            --text: #F8FAFC;
+            --muted: #DED5F5;
+            --border: rgba(167, 139, 250, 0.4);
+            --input: rgba(16, 13, 36, 0.9);
+            --success: #4ADE80;
+            --error: #F87171;
+        }
+
         body {
             margin: 0;
+            padding: 35px 18px;
+            min-height: 100vh;
             font-family: Arial, sans-serif;
-            background: #080b12;
-            color: #f5f7fb;
-            padding: 30px 16px;
+            background: var(--bg);
+            color: var(--text);
         }
 
         .container {
+            width: 100%;
             max-width: 850px;
             margin: auto;
         }
 
         .brand {
-            color: #70a5ff;
-            font-size: 22px;
+            color: var(--accent-light);
+            font-size: 25px;
             font-weight: bold;
-            margin-bottom: 20px;
+            letter-spacing: 1px;
+            margin-bottom: 22px;
+            text-shadow: 0 0 18px rgba(167, 139, 250, 0.45);
+        }
+
+        .back-link {
+            display: inline-block;
+            color: var(--accent-light);
+            text-decoration: none;
+            margin-bottom: 24px;
+            transition: 0.3s;
+        }
+
+        .back-link:hover {
+            color: white;
+            text-shadow: 0 0 10px var(--accent);
         }
 
         h1 {
-            color: #70a5ff;
+            color: var(--accent-light);
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        h2 {
+            color: var(--accent-light);
+            font-size: 21px;
+            margin-top: 0;
         }
 
         p {
-            color: #b9c3d4;
-            line-height: 1.6;
+            color: var(--muted);
+            line-height: 1.7;
+        }
+
+        .description {
+            margin-bottom: 28px;
         }
 
         .card {
-            background: #111827;
-            border: 1px solid #29354a;
-            border-radius: 14px;
-            padding: 22px;
-            margin: 22px 0;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            padding: 25px;
+            margin: 24px 0;
+            box-shadow: 0 10px 35px rgba(0, 0, 0, 0.25),
+                0 0 20px rgba(139, 92, 246, 0.08);
+            backdrop-filter: blur(14px);
+            transition: 0.3s ease;
+        }
+
+        .card:hover {
+            border-color: rgba(196, 181, 253, 0.7);
+            box-shadow: 0 12px 38px rgba(124, 58, 237, 0.15);
         }
 
         label {
             display: block;
-            margin: 15px 0 8px;
+            margin: 18px 0 9px;
+            color: var(--accent-light);
             font-weight: bold;
+            font-size: 14px;
         }
 
         textarea {
             width: 100%;
             min-height: 110px;
-            padding: 12px;
-            background: #080b12;
-            color: white;
-            border: 1px solid #394761;
-            border-radius: 8px;
+            padding: 14px;
+            background: var(--input);
+            color: var(--text);
+            border: 1px solid var(--border);
+            border-radius: 11px;
+            outline: none;
             resize: vertical;
+            font-family: Arial, sans-serif;
+            font-size: 14px;
+            line-height: 1.6;
+            transition: 0.3s;
+        }
+
+        textarea:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(167, 139, 250, 0.13);
+        }
+
+        textarea::placeholder {
+            color: #A99BC8;
         }
 
         button {
-            margin-top: 14px;
-            padding: 12px 18px;
-            border: 0;
-            border-radius: 8px;
-            background: #3478f6;
+            margin-top: 15px;
+            padding: 12px 21px;
+            border: 1px solid transparent;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #7C3AED, #A78BFA);
             color: white;
+            font-size: 14px;
             font-weight: bold;
             cursor: pointer;
+            transition: 0.3s ease;
         }
 
-        button:hover {
-            background: #1e5ed0;
+        button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(139, 92, 246, 0.35);
+            background: linear-gradient(135deg, #8B5CF6, #C4B5FD);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
         }
 
         .secondary {
-            background: #334155;
+            background: rgba(124, 58, 237, 0.15);
+            border: 1px solid var(--border);
+            color: var(--accent-light);
+        }
+
+        .secondary:hover:not(:disabled) {
+            background: rgba(124, 58, 237, 0.3);
         }
 
         .result {
             white-space: pre-wrap;
             overflow-wrap: anywhere;
-            background: #080b12;
-            border: 1px solid #29354a;
-            padding: 12px;
-            border-radius: 8px;
-            min-height: 45px;
+            word-break: break-word;
+            background: var(--input);
+            border: 1px solid var(--border);
+            color: #E9DFFF;
+            padding: 15px;
+            border-radius: 11px;
+            min-height: 48px;
             margin-top: 10px;
+            font-family: monospace;
+            font-size: 13px;
+            line-height: 1.6;
         }
 
         .status {
             font-weight: bold;
+            padding: 13px;
+            border-radius: 10px;
+            margin-top: 16px;
+            line-height: 1.6;
+            overflow-wrap: anywhere;
         }
 
         .success {
-            color: #6ee7a0;
+            color: var(--success);
+            background: rgba(74, 222, 128, 0.09);
+            border: 1px solid rgba(74, 222, 128, 0.3);
         }
 
         .error {
-            color: #ff9292;
+            color: var(--error);
+            background: rgba(248, 113, 113, 0.09);
+            border: 1px solid rgba(248, 113, 113, 0.3);
         }
 
-        a {
-            color: #8bb5ff;
+        .section-number {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 30px;
+            height: 30px;
+            margin-right: 8px;
+            border-radius: 9px;
+            background: rgba(167, 139, 250, 0.16);
+            color: var(--accent-light);
+            border: 1px solid var(--border);
+            font-size: 14px;
+        }
+
+        .hint {
+            color: #B9A9D8;
+            font-size: 13px;
+            margin-top: 8px;
+        }
+
+        @media (max-width: 600px) {
+            body {
+                padding: 25px 14px;
+            }
+
+            h1 {
+                font-size: 27px;
+            }
+
+            .card {
+                padding: 18px;
+            }
+
+            button {
+                width: 100%;
+            }
         }
     </style>
 </head>
 
-<body>
+<body class="login-page">
+
     <div class="container">
 
         <div class="brand">CryptoVault</div>
 
-        <a href="home.html">← Back to Dashboard</a>
+        <a href="home.html" class="back-link">
+            ← Back to Dashboard
+        </a>
 
         <h1>Digital Signature</h1>
-        <p>
-            Sign a message with RSA and SHA-256, then verify its
-            integrity using the matching public key.
+
+        <p class="description">
+            Secure your messages with RSA and SHA-256 digital signatures.
+            Generate a signature and verify the authenticity and integrity
+            of your message using the matching public key.
         </p>
 
+        <!-- GENERATE SIGNATURE -->
         <div class="card">
-            <h2>1. Generate Signature</h2>
+
+            <h2>
+                <span class="section-number">1</span>
+                Generate Signature
+            </h2>
 
             <label for="signMessage">Plain-text message</label>
+
             <textarea id="signMessage" placeholder="Enter the message you want to sign..."></textarea>
 
             <button id="signButton" onclick="generateSignature()">
                 Generate Signature
             </button>
 
-            <p>Digital signature</p>
-            <div id="signatureOutput" class="result">Your signature will appear here.</div>
+            <label>Digital Signature</label>
+
+            <div id="signatureOutput" class="result">
+                Your signature will appear here.
+            </div>
+
             <button class="secondary" onclick="copyResult('signatureOutput')">
                 Copy Signature
             </button>
 
-            <p>Public key</p>
-            <div id="publicKeyOutput" class="result">Your public key will appear here.</div>
+            <label>Public Key</label>
+
+            <div id="publicKeyOutput" class="result">
+                Your public key will appear here.
+            </div>
+
             <button class="secondary" onclick="copyResult('publicKeyOutput')">
                 Copy Public Key
             </button>
+
+            <p class="hint">
+                Keep your public key available for signature verification.
+            </p>
+
         </div>
 
+        <!-- VERIFY SIGNATURE -->
         <div class="card">
-            <h2>2. Verify Signature</h2>
+
+            <h2>
+                <span class="section-number">2</span>
+                Verify Signature
+            </h2>
 
             <label for="verifyMessage">Message to verify</label>
+
             <textarea id="verifyMessage" placeholder="Paste the original signed message..."></textarea>
 
-            <label for="verifySignature">Digital signature</label>
+            <label for="verifySignature">Digital Signature</label>
+
             <textarea id="verifySignature" placeholder="Paste the generated signature..."></textarea>
 
-            <label for="verifyPublicKey">Public key</label>
+            <label for="verifyPublicKey">Public Key</label>
+
             <textarea id="verifyPublicKey" placeholder="Paste the matching public key..."></textarea>
 
             <button id="verifyButton" onclick="verifySignature()">
                 Verify Signature
             </button>
 
-            <p id="verificationStatus" class="status"></p>
+            <p id="verificationStatus" class="status" aria-live="polite"></p>
+
         </div>
+
     </div>
 
     <script>
-        const API = "https://cryptovault-mysv.onrender.com";
+        const API =
+            (window.location.hostname === "127.0.0.1" ||
+                window.location.hostname === "localhost")
+                ? "http://127.0.0.1:8000"
+                : "https://cryptovault-mysv.onrender.com";
 
         function requireLogin() {
             if (!localStorage.getItem("access_token")) {
@@ -184,8 +353,11 @@ html
         async function generateSignature() {
             if (!requireLogin()) return;
 
-            const message = document.getElementById("signMessage").value;
-            const button = document.getElementById("signButton");
+            const message =
+                document.getElementById("signMessage").value;
+
+            const button =
+                document.getElementById("signButton");
 
             if (!message.trim()) {
                 alert("Please enter a message first.");
@@ -209,7 +381,9 @@ html
                 const data = await response.json();
 
                 if (!response.ok) {
-                    throw new Error(data.detail || data.message || "Signing failed.");
+                    throw new Error(
+                        data.detail || data.message || "Signing failed."
+                    );
                 }
 
                 document.getElementById("signatureOutput").textContent =
@@ -218,13 +392,21 @@ html
                 document.getElementById("publicKeyOutput").textContent =
                     data.public_key;
 
-                document.getElementById("verifyMessage").value = message;
+                document.getElementById("verifyMessage").value =
+                    message;
+
                 document.getElementById("verifySignature").value =
                     data.signature;
+
                 document.getElementById("verifyPublicKey").value =
                     data.public_key;
 
-                document.getElementById("verificationStatus").textContent = "";
+                const status =
+                    document.getElementById("verificationStatus");
+
+                status.textContent = "";
+                status.className = "status";
+
             } catch (error) {
                 alert("Could not generate signature: " + error.message);
             } finally {
@@ -236,18 +418,28 @@ html
         async function verifySignature() {
             if (!requireLogin()) return;
 
-            const message = document.getElementById("verifyMessage").value;
-            const signature = document.getElementById("verifySignature").value.trim();
-            const public_key = document.getElementById("verifyPublicKey").value.trim();
-            const status = document.getElementById("verificationStatus");
-            const button = document.getElementById("verifyButton");
+            const message =
+                document.getElementById("verifyMessage").value;
+
+            const signature =
+                document.getElementById("verifySignature").value.trim();
+
+            const public_key =
+                document.getElementById("verifyPublicKey").value.trim();
+
+            const status =
+                document.getElementById("verificationStatus");
+
+            const button =
+                document.getElementById("verifyButton");
 
             status.textContent = "";
             status.className = "status";
 
-            if (!message || !signature || !public_key) {
+            if (!message.trim() || !signature || !public_key) {
                 status.textContent =
                     "Please provide the message, signature, and public key.";
+
                 status.classList.add("error");
                 return;
             }
@@ -278,11 +470,23 @@ html
                     );
                 }
 
-                status.textContent = data.message;
-                status.classList.add(data.valid ? "success" : "error");
+                status.textContent =
+                    data.message || (
+                        data.valid
+                            ? "Signature is valid."
+                            : "Signature is invalid."
+                    );
+
+                status.classList.add(
+                    data.valid ? "success" : "error"
+                );
+
             } catch (error) {
-                status.textContent = "Could not verify: " + error.message;
+                status.textContent =
+                    "Could not verify: " + error.message;
+
                 status.classList.add("error");
+
             } finally {
                 button.disabled = false;
                 button.textContent = "Verify Signature";
@@ -290,7 +494,8 @@ html
         }
 
         async function copyResult(elementId) {
-            const value = document.getElementById(elementId).textContent;
+            const value =
+                document.getElementById(elementId).textContent.trim();
 
             if (!value || value.includes("will appear here")) {
                 alert("Generate a signature first.");
@@ -304,7 +509,11 @@ html
                 alert("Copy failed. Select and copy the text manually.");
             }
         }
+
+        // Check authentication when the page loads.
+        requireLogin();
     </script>
+
 </body>
 
 </html>

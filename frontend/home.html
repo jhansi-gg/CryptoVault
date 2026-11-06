@@ -2,669 +2,777 @@
 <html lang="en">
 
 <head>
-
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CryptoVault | Dashboard</title>
     <link rel="stylesheet" href="style.css">
-
     <style>
         :root {
-            --bg: #07111F;
-            --card: #10243A;
-            --accent: #38BDF8;
-            --text: #F0F9FF;
-            --muted: #A6BDD1;
-            --border: #24415C;
-            --surface: #0B1B2D;
-            --success: #4ADE80;
+            --background: #100D24;
+            --card: #211641;
+            --primary: #8B5CF6;
+            --secondary: #C4B5FD;
+            --text: #F8FAFC;
+            --muted: #DED5F5;
+            --border: rgba(167, 139, 250, 0.45);
         }
 
         * {
-            box-sizing: border-box;
             margin: 0;
             padding: 0;
-            font-family: Arial, sans-serif;
+            box-sizing: border-box;
+            font-family: "Segoe UI", Arial, sans-serif;
         }
 
         body {
-            background:
-                radial-gradient(circle at 15% 20%,
-                    rgba(56, 189, 248, 0.12),
-                    transparent 35%),
-                radial-gradient(circle at 85% 75%,
-                    rgba(37, 99, 235, 0.13),
-                    transparent 35%),
-                var(--bg);
-            background-size: 150% 150%;
-            animation: backgroundGlow 12s ease-in-out infinite alternate;
-            color: var(--text);
             min-height: 100vh;
+            color: var(--text);
+            background: var(--background);
+            overflow-x: hidden;
         }
 
-        @keyframes backgroundGlow {
-            0% {
-                background-position: 0% 0%;
-            }
+        /* ANIMATED DIGITAL NETWORK BACKGROUND */
 
-            50% {
-                background-position: 100% 50%;
-            }
-
-            100% {
-                background-position: 0% 100%;
-            }
+        #networkCanvas {
+            position: fixed;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
         }
+
+        .background-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 1;
+            pointer-events: none;
+            background:
+                linear-gradient(90deg,
+                    rgba(16, 13, 36, 0.42),
+                    rgba(16, 13, 36, 0.12),
+                    rgba(16, 13, 36, 0.42));
+        }
+
+        /* HEADER */
 
         header {
-            padding: 22px 7%;
+            position: relative;
+            z-index: 2;
+            min-height: 78px;
+            padding: 0 6%;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            gap: 16px;
+            gap: 15px;
             border-bottom: 1px solid var(--border);
-            background: var(--surface);
+            background: rgba(16, 13, 36, 0.72);
+            backdrop-filter: blur(12px);
         }
 
         .brand {
-            font-size: 25px;
+            font-size: 26px;
             font-weight: 800;
             letter-spacing: 1px;
+            color: white;
         }
 
-        .brand span,
-        .hero h1 span {
-            color: var(--accent);
+        .brand span {
+            color: var(--secondary);
         }
 
-        .header-actions {
+        .header-right {
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 20px;
         }
 
-        .user-name {
+        #username {
             color: var(--muted);
             font-size: 14px;
         }
 
         .logout-btn {
-            padding: 10px 16px;
-            color: var(--accent);
-            background: transparent;
-            border: 1px solid var(--accent);
+            padding: 9px 20px;
+            border: 1px solid var(--primary);
             border-radius: 8px;
+            color: white;
+            background: rgba(139, 92, 246, 0.2);
             cursor: pointer;
-            font-weight: bold;
+            transition: 0.3s;
         }
 
         .logout-btn:hover {
-            color: var(--bg);
-            background: var(--accent);
+            background: var(--primary);
+            box-shadow: 0 0 20px rgba(139, 92, 246, 0.6);
         }
 
-        .container {
-            width: min(1150px, 100%);
+        /* MAIN DASHBOARD */
+
+        .dashboard {
+            position: relative;
+            z-index: 2;
+            width: 88%;
+            max-width: 1350px;
+            min-height: calc(100vh - 135px);
             margin: auto;
-            padding: 48px 22px;
+            display: grid;
+            grid-template-columns: 1.1fr 0.9fr;
+            align-items: center;
+            gap: 65px;
+            padding: 45px 0;
         }
 
-        .hero {
-            margin-bottom: 36px;
+        /* WELCOME SECTION */
+
+        .welcome {
+            animation: slideLeft 1s ease both;
         }
 
         .eyebrow {
-            color: var(--accent);
+            color: var(--secondary);
             font-size: 12px;
-            font-weight: bold;
-            letter-spacing: 2px;
-            margin-bottom: 14px;
+            font-weight: 700;
+            letter-spacing: 4px;
+            margin-bottom: 20px;
         }
 
-        .hero h1 {
-            font-size: clamp(30px, 5vw, 44px);
-            line-height: 1.2;
-            margin-bottom: 14px;
+        .welcome h1 {
+            font-size: clamp(40px, 5vw, 66px);
+            line-height: 1.12;
+            margin-bottom: 22px;
+            color: white;
+            text-shadow: 0 3px 20px rgba(0, 0, 0, 0.5);
         }
 
-        .hero p {
-            max-width: 680px;
-            color: var(--muted);
+        .welcome h1 span {
+            color: var(--secondary);
+            text-shadow: 0 0 25px rgba(167, 139, 250, 0.6);
+        }
+
+        .welcome p {
+            max-width: 510px;
+            color: #E9E2FA;
             font-size: 16px;
             line-height: 1.8;
         }
 
-        .section-title {
-            margin-bottom: 18px;
-            font-size: 21px;
+        .tagline {
+            margin-top: 27px;
+            color: var(--secondary);
+            font-size: 14px;
+            font-weight: 600;
+            letter-spacing: 1px;
         }
+
+        /* FEATURE CARDS */
 
         .features {
-            display: grid;
-            grid-template-columns: repeat(6, minmax(0, 1fr));
-            gap: 20px;
-        }
-
-
-        /* Feature card grid placement */
-        .feature-card {
-            grid-column: span 2;
-        }
-
-        /* Premium glassmorphism card */
-        .feature-card {
-            position: relative;
             display: flex;
             flex-direction: column;
-            justify-content: center;
-            align-items: flex-start;
-
-            padding: 28px;
-            min-height: 230px;
-
-            background: linear-gradient(135deg,
-                    rgba(20, 42, 67, 0.78),
-                    rgba(9, 25, 43, 0.88));
-
-            border: 1px solid rgba(56, 189, 248, 0.18);
-            border-radius: 18px;
-
-            backdrop-filter: blur(14px);
-            -webkit-backdrop-filter: blur(14px);
-
-            box-shadow:
-                0 8px 25px rgba(0, 0, 0, 0.20),
-                inset 0 1px 0 rgba(255, 255, 255, 0.04);
-
-            overflow: hidden;
-            cursor: pointer;
-
-            transition:
-                transform 0.35s ease,
-                background 0.35s ease,
-                border-color 0.35s ease,
-                box-shadow 0.35s ease;
+            gap: 14px;
+            animation: slideRight 1s ease both;
         }
 
-        /* Center the last two cards */
+        .feature-card {
+            display: flex;
+            align-items: center;
+            gap: 17px;
+            padding: 16px 20px;
+            min-height: 82px;
+            border: 1px solid var(--border);
+            border-radius: 13px;
+            background: rgba(33, 22, 65, 0.76);
+            backdrop-filter: blur(9px);
+            text-decoration: none;
+            color: white;
+            transition: 0.35s ease;
+            animation: fadeUp 0.8s ease both;
+        }
+
+        .feature-card:nth-child(2) {
+            animation-delay: 0.1s;
+        }
+
+        .feature-card:nth-child(3) {
+            animation-delay: 0.2s;
+        }
+
         .feature-card:nth-child(4) {
-            grid-column: 2 / span 2;
+            animation-delay: 0.3s;
         }
 
         .feature-card:nth-child(5) {
-            grid-column: 4 / span 2;
+            animation-delay: 0.4s;
         }
 
-        /* Card hover effect */
         .feature-card:hover {
-            transform: translateY(-7px);
-
-            background: linear-gradient(135deg,
-                    rgba(24, 65, 100, 0.92),
-                    rgba(12, 36, 60, 0.96));
-
-            border-color: rgba(56, 189, 248, 0.65);
-
-            box-shadow:
-                0 15px 35px rgba(0, 0, 0, 0.30),
-                0 0 22px rgba(56, 189, 248, 0.13),
-                inset 0 1px 0 rgba(255, 255, 255, 0.08);
+            transform: translateX(-8px);
+            border-color: #C4B5FD;
+            background: rgba(91, 53, 155, 0.78);
+            box-shadow: 0 0 25px rgba(139, 92, 246, 0.35);
         }
 
-        .feature-card:focus-visible {
-            outline: 2px solid var(--accent);
-            outline-offset: 4px;
+        .feature-icon {
+            width: 47px;
+            height: 47px;
+            flex-shrink: 0;
+            display: grid;
+            place-items: center;
+            border-radius: 11px;
+            color: var(--secondary);
+            background: rgba(139, 92, 246, 0.2);
+            border: 1px solid rgba(196, 181, 253, 0.35);
+            font-size: 23px;
         }
 
-        /* Card entrance animation */
-        @keyframes cardAppear {
+        .feature-copy {
+            flex: 1;
+        }
+
+        .feature-copy h3 {
+            font-size: 15px;
+            margin-bottom: 5px;
+            color: white;
+        }
+
+        .feature-copy p {
+            color: #DED5F5;
+            font-size: 12px;
+            line-height: 1.5;
+        }
+
+        .arrow {
+            color: var(--secondary);
+            font-size: 23px;
+            transition: 0.3s;
+        }
+
+        .feature-card:hover .arrow {
+            transform: translateX(5px);
+        }
+
+        /* FOOTER */
+
+        footer {
+            position: relative;
+            z-index: 2;
+            padding: 16px;
+            text-align: center;
+            color: #D5C9F0;
+            font-size: 12px;
+            border-top: 1px solid var(--border);
+            background: rgba(16, 13, 36, 0.72);
+            backdrop-filter: blur(10px);
+        }
+
+        /* ANIMATIONS */
+
+        @keyframes slideLeft {
             from {
                 opacity: 0;
-                translate: 0 20px;
+                transform: translateX(-40px);
             }
 
             to {
                 opacity: 1;
-                translate: 0 0;
+                transform: translateX(0);
             }
         }
 
-        .feature-card {
-            animation: cardAppear 0.7s ease both;
-        }
-
-        .feature-card:nth-child(1) {
-            animation-delay: 0.1s;
-        }
-
-        .feature-card:nth-child(2) {
-            animation-delay: 0.2s;
-        }
-
-        .feature-card:nth-child(3) {
-            animation-delay: 0.3s;
-        }
-
-        .feature-card:nth-child(4) {
-            animation-delay: 0.4s;
-        }
-
-        .feature-card:nth-child(5) {
-            animation-delay: 0.5s;
-        }
-
-        /* Premium icon appearance */
-        .feature-icon {
-            width: 52px;
-            height: 52px;
-
-            display: grid;
-            place-items: center;
-
-            border-radius: 14px;
-            color: var(--accent);
-
-            background: rgba(56, 189, 248, 0.10);
-            border: 1px solid rgba(56, 189, 248, 0.25);
-
-            font-size: 26px;
-            margin-bottom: 22px;
-
-            box-shadow: 0 0 18px rgba(56, 189, 248, 0.08);
-
-            transition: all 0.35s ease;
-        }
-
-        .feature-card:hover .feature-icon {
-            background: rgba(56, 189, 248, 0.18);
-            border-color: rgba(56, 189, 248, 0.55);
-            box-shadow: 0 0 22px rgba(56, 189, 248, 0.18);
-        }
-
-        .feature-card h3 {
-            font-size: 18px;
-            margin-bottom: 10px;
-        }
-
-        .feature-card p {
-            color: var(--muted);
-            font-size: 14px;
-            line-height: 1.7;
-            margin-bottom: 20px;
-        }
-
-        .arrow {
-            color: var(--accent);
-            font-size: 13px;
-            font-weight: bold;
-            margin-top: auto;
-        }
-
-
-        .feature-card {
-            position: relative;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: flex-start;
-
-            padding: 28px;
-            min-height: 190px;
-
-            background: linear-gradient(135deg,
-                    rgba(20, 42, 67, 0.78),
-                    rgba(9, 25, 43, 0.88));
-
-            border: 1px solid rgba(56, 189, 248, 0.18);
-            border-radius: 18px;
-
-            backdrop-filter: blur(14px);
-            -webkit-backdrop-filter: blur(14px);
-
-            box-shadow:
-                0 8px 25px rgba(0, 0, 0, 0.20),
-                inset 0 1px 0 rgba(255, 255, 255, 0.04);
-
-            transition:
-                transform 0.35s ease,
-                background 0.35s ease,
-                border-color 0.35s ease,
-                box-shadow 0.35s ease;
-
-            overflow: hidden;
-            cursor: pointer;
-        }
-
-        .feature-card:nth-child(4) {
-            grid-column: 2 / span 2;
-        }
-
-        .feature-card:nth-child(5) {
-            grid-column: 4 / span 2;
-        }
-
-        .feature-card {
-            display: flex;
-            /* Dashboard card entrance animation */
-
-            @keyframes cardAppear {
-                from {
-                    opacity: 0;
-                    transform: translateY(25px);
-                }
-
-                to {
-                    opacity: 1;
-                    transform: translateY(0);
-                }
-            }
-
-            .feature-card {
+        @keyframes slideRight {
+            from {
                 opacity: 0;
-                animation: cardAppear 0.7s ease forwards;
+                transform: translateX(40px);
             }
 
-            .feature-card:nth-child(1) {
-                animation-delay: 0.1s;
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(18px);
             }
 
-            .feature-card:nth-child(2) {
-                animation-delay: 0.2s;
+            to {
+                opacity: 1;
+                transform: translateY(0);
             }
-
-            .feature-card:nth-child(3) {
-                animation-delay: 0.3s;
-            }
-
-            .feature-card:nth-child(4) {
-                animation-delay: 0.4s;
-            }
-
-            .feature-card:nth-child(5) {
-                animation-delay: 0.5s;
-            }
-
-            flex-direction: column;
-            align-items: flex-start;
-            min-height: 230px;
-            padding: 24px;
-            border-radius: 14px;
-            border: 1px solid var(--border);
-            background: var(--card);
-            cursor: pointer;
-            transition: transform .2s,
-            border-color .2s,
-            box-shadow .2s;
         }
 
-        .feature-card {
-            transition: transform 0.25s ease,
-                border-color 0.25s ease,
-                box-shadow 0.25s ease,
-                background 0.25s ease;
-        }
-
-        .feature-card:hover {
-            transform: translateY(-7px);
-
-            background: linear-gradient(135deg,
-                    rgba(24, 65, 100, 0.92),
-                    rgba(12, 36, 60, 0.96));
-
-            border-color: rgba(56, 189, 248, 0.65);
-
-            box-shadow:
-                0 15px 35px rgba(0, 0, 0, 0.30),
-                0 0 22px rgba(56, 189, 248, 0.13),
-                inset 0 1px 0 rgba(255, 255, 255, 0.08);
-        }
-
-        .feature-card:focus-visible {
-            outline: 2px solid var(--accent);
-            outline-offset: 4px;
-        }
-
-        .feature-icon {
-            width: 52px;
-            height: 52px;
-            display: grid;
-            place-items: center;
-            border-radius: 12px;
-            color: var(--accent);
-            background: #38BDF81A;
-            border: 1px solid #38BDF84D;
-            font-size: 26px;
-            margin-bottom: 22px;
-        }
-
-        .feature-card h3 {
-            font-size: 18px;
-            margin-bottom: 10px;
-        }
-
-        .feature-card p {
-            color: var(--muted);
-            font-size: 14px;
-            line-height: 1.7;
-            margin-bottom: 20px;
-        }
-
-        .arrow {
-            color: var(--accent);
-            font-size: 13px;
-            font-weight: bold;
-            margin-top: auto;
-        }
-
-        .status-panel {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-top: 30px;
-            padding: 18px;
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-        }
-
-        .status-dot {
-            width: 10px;
-            height: 10px;
-            flex-shrink: 0;
-            border-radius: 50%;
-            background: var(--success);
-            box-shadow: 0 0 12px #4ADE8070;
-        }
-
-        .status-panel strong {
-            display: block;
-            margin-bottom: 5px;
-        }
-
-        .status-panel p {
-            color: var(--muted);
-            font-size: 13px;
-            line-height: 1.6;
-        }
-
-        footer {
-            border-top: 1px solid var(--border);
-            padding: 22px;
-            text-align: center;
-            color: var(--muted);
-            font-size: 12px;
-        }
+        /* TABLET */
 
         @media (max-width: 900px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+                gap: 40px;
+                padding: 55px 0;
+            }
+
+            .welcome {
+                text-align: center;
+            }
+
+            .welcome p {
+                margin: auto;
+            }
+
             .features {
-                grid-template-columns: repeat(4, minmax(0, 1fr));
-            }
-
-            .feature-card {
-                grid-column: span 2;
-            }
-
-            .feature-card:nth-child(4) {
-                grid-column: auto;
-            }
-
-            .feature-card:nth-child(5) {
-                grid-column: 2 / span 2;
+                max-width: 650px;
+                width: 100%;
+                margin: auto;
             }
         }
+
+        /* MOBILE */
 
         @media (max-width: 600px) {
             header {
-                padding: 18px;
-                align-items: flex-start;
-                flex-direction: column;
+                min-height: 68px;
+                padding: 0 5%;
             }
 
-            .header-actions {
-                width: 100%;
-                justify-content: space-between;
+            .brand {
+                font-size: 20px;
             }
 
-            .container {
-                padding: 32px 16px;
+            .header-right {
+                gap: 10px;
             }
 
-            .features {
-                grid-template-columns: 1fr;
+            #username {
+                font-size: 11px;
+            }
+
+            .logout-btn {
+                padding: 7px 11px;
+                font-size: 12px;
+            }
+
+            .dashboard {
+                width: 90%;
+            }
+
+            .welcome h1 {
+                font-size: 38px;
+            }
+
+            .welcome p {
+                font-size: 14px;
             }
 
             .feature-card {
-                grid-column: 1 / -1;
-                min-height: 200px;
+                padding: 13px;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+
+            .welcome,
+            .features,
+            .feature-card {
+                animation: none;
             }
         }
     </style>
 </head>
 
 <body>
+
+    <!-- ANIMATED NETWORK CANVAS -->
+    <canvas id="networkCanvas"></canvas>
+    <div class="background-overlay"></div>
+
+    <!-- HEADER -->
     <header>
         <div class="brand">CRYPTO<span>Vault</span></div>
 
-        <div class="header-actions">
-            <span class="user-name" id="welcomeUser">Welcome</span>
-            <button class="logout-btn" id="logoutBtn" type="button">
-                Sign Out ↗
-            </button>
+        <div class="header-right">
+            <span id="username">Welcome</span>
+            <button class="logout-btn" onclick="logout()">Logout</button>
         </div>
     </header>
 
-    <main class="container">
-        <section class="hero">
-            <div class="eyebrow">SECURE COMMUNICATION PLATFORM</div>
-            <h1>Welcome to <span>CryptoVault</span></h1>
+    <!-- DASHBOARD -->
+    <main class="dashboard">
+
+        <section class="welcome">
+
+            <div class="eyebrow">
+                SECURE COMMUNICATION PLATFORM
+            </div>
+
+            <h1>
+                Welcome to<br>
+                <span>CryptoVault</span>
+            </h1>
+
             <p>
-                Protect your digital communication with encryption,
-                decryption, digital signatures and secure messaging.
-                Choose a feature below to get started.
+                Experience secure digital communication with advanced
+                encryption, digital signatures, and protected file sharing.
+                Keep your data private and your communication safe.
             </p>
+
+            <div class="tagline">
+                Your Privacy. Your Security. Your Control.
+            </div>
+
         </section>
 
-        <h2 class="section-title">Your Security Workspace</h2>
-
+        <!-- FEATURES -->
         <section class="features">
-            <div class="feature-card" role="link" tabindex="0" onclick="openFeature('crypto.html')"
-                onkeydown="handleCardKey(event, 'crypto.html')">
+
+            <a href="crypto.html" class="feature-card">
                 <div class="feature-icon">🔐</div>
-                <h3>Encrypt &amp; Decrypt</h3>
-                <p>
-                    Convert readable messages into ciphertext and
-                    decrypt them using your secret key.
-                </p>
-                <span class="arrow">Open Encryption →</span>
-            </div>
-            <div class="feature-card" role="link" tabindex="0" onclick="openFeature('files.html')"
-                onkeydown="handleCardKey(event, 'files.html')">
+                <div class="feature-copy">
+                    <h3>Encrypt & Decrypt</h3>
+                    <p>Protect your text using secure encryption.</p>
+                </div>
+                <span class="arrow">→</span>
+            </a>
+
+            <a href="files.html" class="feature-card">
                 <div class="feature-icon">📁</div>
-                <h3>File Encryption &amp; Decryption</h3>
-                <p>
-                    Encrypt your PDF, images and documents securely,
-                    download encrypted files and decrypt them when needed.
-                </p>
-                <span class="arrow">Open File Security →</span>
-            </div>
+                <div class="feature-copy">
+                    <h3>File Encryption & Decryption</h3>
+                    <p>Securely encrypt, store and decrypt files.</p>
+                </div>
+                <span class="arrow">→</span>
+            </a>
 
-
-            <div class="feature-card" role="link" tabindex="0" onclick="openFeature('signature.html')"
-                onkeydown="handleCardKey(event, 'signature.html')">
+            <a href="signature.html" class="feature-card">
                 <div class="feature-icon">✍️</div>
-                <h3>Digital Signature</h3>
-                <p>
-                    Sign messages digitally and verify whether
-                    signed content has been changed.
-                </p>
-                <span class="arrow">Open Signatures →</span>
-            </div>
+                <div class="feature-copy">
+                    <h3>Digital Signature</h3>
+                    <p>Sign and verify digital messages.</p>
+                </div>
+                <span class="arrow">→</span>
+            </a>
 
-            <div class="feature-card" role="link" tabindex="0" onclick="openFeature('security.html')"
-                onkeydown="handleCardKey(event, 'security.html')">
+            <a href="security.html" class="feature-card">
                 <div class="feature-icon">🛡️</div>
-                <h3>Security Dashboard</h3>
-                <p>
-                    Explore the security information and features
-                    available in your application.
-                </p>
-                <span class="arrow">View Security →</span>
-            </div>
+                <div class="feature-copy">
+                    <h3>Security Dashboard</h3>
+                    <p>Explore your account security features.</p>
+                </div>
+                <span class="arrow">→</span>
+            </a>
 
-            <div class="feature-card" role="link" tabindex="0" onclick="openFeature('messages.html')"
-                onkeydown="handleCardKey(event, 'messages.html')">
+            <a href="messages.html" class="feature-card">
                 <div class="feature-icon">💬</div>
-                <h3>Secure Messaging</h3>
-                <p>
-                    Send encrypted messages to registered users
-                    and decrypt messages you receive.
-                </p>
-                <span class="arrow">Open Messaging →</span>
-            </div>
-
+                <div class="feature-copy">
+                    <h3>Secure Messaging</h3>
+                    <p>Send and receive encrypted messages.</p>
+                </div>
+                <span class="arrow">→</span>
+            </a>
 
         </section>
 
-        <section class="status-panel">
-            <div class="status-dot"></div>
-            <div>
-                <strong>CryptoVault Workspace</strong>
-                <p>
-                    You are signed in. Keep your passwords and
-                    encryption keys private.
-                </p>
-            </div>
-        </section>
     </main>
 
+    <!-- FOOTER -->
     <footer>
-        CryptoVault · Cryptographic Techniques for Secure Communication
+        CryptoVault © 2026 | Secure Communication. Protected by Cryptography.
     </footer>
 
     <script>
-        const API_BASE =
-            (window.location.hostname === "127.0.0.1" ||
-                window.location.hostname === "localhost")
 
+        /* =====================================
+           ANIMATED DIGITAL NETWORK BACKGROUND
+        ===================================== */
+
+        const canvas = document.getElementById("networkCanvas");
+        const ctx = canvas.getContext("2d");
+
+        let width, height;
+        let particles = [];
+        let animationFrame;
+
+        function resizeCanvas() {
+            const dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+            width = window.innerWidth;
+            height = window.innerHeight;
+
+            canvas.width = width * dpr;
+            canvas.height = height * dpr;
+
+            canvas.style.width = width + "px";
+            canvas.style.height = height + "px";
+
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+            createParticles();
+        }
+
+        class Particle {
+            constructor() {
+                this.x = Math.random() * width;
+                this.y = Math.random() * height;
+
+                this.vx = (Math.random() - 0.5) * 0.55;
+                this.vy = (Math.random() - 0.5) * 0.55;
+
+                this.radius = Math.random() * 2 + 1;
+                this.phase = Math.random() * Math.PI * 2;
+            }
+
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.phase += 0.025;
+
+                if (this.x < 0 || this.x > width) {
+                    this.vx *= -1;
+                }
+
+                if (this.y < 0 || this.y > height) {
+                    this.vy *= -1;
+                }
+            }
+
+            draw() {
+                const glow = 0.6 + Math.sin(this.phase) * 0.4;
+
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+
+                ctx.fillStyle = `rgba(196,181,253,${glow})`;
+                ctx.shadowBlur = 16;
+                ctx.shadowColor = "#8B5CF6";
+                ctx.fill();
+                ctx.shadowBlur = 0;
+            }
+        }
+
+        function createParticles() {
+            particles = [];
+
+            const count = Math.min(
+                110,
+                Math.max(45, Math.floor(width * height / 11500))
+            );
+
+            for (let i = 0; i < count; i++) {
+                particles.push(new Particle());
+            }
+        }
+
+        /* DRAW CONNECTED NETWORK */
+
+        function drawConnections() {
+            for (let i = 0; i < particles.length; i++) {
+
+                for (let j = i + 1; j < particles.length; j++) {
+
+                    const p1 = particles[i];
+                    const p2 = particles[j];
+
+                    const dx = p1.x - p2.x;
+                    const dy = p1.y - p2.y;
+
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+
+                    if (distance < 155) {
+
+                        const opacity = (1 - distance / 155) * 0.42;
+
+                        ctx.beginPath();
+                        ctx.moveTo(p1.x, p1.y);
+                        ctx.lineTo(p2.x, p2.y);
+
+                        ctx.strokeStyle =
+                            `rgba(167,139,250,${opacity})`;
+
+                        ctx.lineWidth = 0.8;
+                        ctx.stroke();
+                    }
+                }
+            }
+        }
+
+        /* MOVING DATA SIGNALS */
+
+        let signals = [];
+
+        function createSignals() {
+            signals = [];
+
+            for (let i = 0; i < 22; i++) {
+                signals.push({
+                    index: Math.floor(Math.random() * particles.length),
+                    progress: Math.random(),
+                    speed: 0.002 + Math.random() * 0.004
+                });
+            }
+        }
+
+        function drawSignals() {
+
+            signals.forEach(signal => {
+
+                const p1 = particles[signal.index];
+
+                if (!p1) return;
+
+                let nearest = null;
+                let nearestDistance = 155;
+
+                particles.forEach((p2, index) => {
+
+                    if (index === signal.index) return;
+
+                    const dx = p1.x - p2.x;
+                    const dy = p1.y - p2.y;
+
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+
+                    if (distance < nearestDistance) {
+                        nearestDistance = distance;
+                        nearest = p2;
+                    }
+                });
+
+                if (!nearest) return;
+
+                signal.progress += signal.speed;
+
+                if (signal.progress >= 1) {
+                    signal.progress = 0;
+                }
+
+                const x =
+                    p1.x + (nearest.x - p1.x) * signal.progress;
+
+                const y =
+                    p1.y + (nearest.y - p1.y) * signal.progress;
+
+                ctx.beginPath();
+                ctx.arc(x, y, 2.4, 0, Math.PI * 2);
+
+                ctx.fillStyle = "#FFFFFF";
+                ctx.shadowBlur = 15;
+                ctx.shadowColor = "#A78BFA";
+                ctx.fill();
+                ctx.shadowBlur = 0;
+            });
+        }
+
+        /* DIGITAL INFORMATION PANELS */
+
+        function drawPanel(x, y, w, h, label) {
+
+            ctx.save();
+
+            ctx.strokeStyle = "rgba(167,139,250,0.23)";
+            ctx.lineWidth = 1;
+
+            ctx.fillStyle = "rgba(30,20,65,0.16)";
+            ctx.fillRect(x, y, w, h);
+
+            ctx.strokeRect(x, y, w, h);
+
+            ctx.fillStyle = "rgba(196,181,253,0.65)";
+            ctx.font = "10px monospace";
+            ctx.fillText(label, x + 10, y + 16);
+
+            ctx.strokeStyle = "rgba(139,92,246,0.45)";
+
+            for (let i = 0; i < 4; i++) {
+
+                const barWidth = 12 + Math.random() * (w - 35);
+
+                ctx.beginPath();
+                ctx.moveTo(x + 10, y + 27 + i * 12);
+                ctx.lineTo(x + barWidth, y + 27 + i * 12);
+                ctx.stroke();
+            }
+
+            ctx.restore();
+        }
+
+        /* ANIMATION LOOP */
+
+        function animateNetwork() {
+
+            ctx.clearRect(0, 0, width, height);
+
+            // Subtle purple atmospheric glow
+            const glow = ctx.createRadialGradient(
+                width * 0.5,
+                height * 0.5,
+                20,
+                width * 0.5,
+                height * 0.5,
+                Math.max(width, height) * 0.75
+            );
+
+            glow.addColorStop(0, "rgba(91,33,182,0.12)");
+            glow.addColorStop(1, "rgba(16,13,36,0.02)");
+
+            ctx.fillStyle = glow;
+            ctx.fillRect(0, 0, width, height);
+
+            particles.forEach(particle => {
+                particle.update();
+            });
+
+            drawConnections();
+
+            particles.forEach(particle => {
+                particle.draw();
+            });
+
+            drawSignals();
+
+            // Floating technical information panels
+            drawPanel(width * 0.04, height * 0.25, 145, 75, "NETWORK STATUS");
+            drawPanel(width * 0.79, height * 0.18, 155, 75, "DATA TRANSFER");
+            drawPanel(width * 0.72, height * 0.78, 165, 75, "SECURE NODE");
+
+            animationFrame = requestAnimationFrame(animateNetwork);
+        }
+
+        /* START BACKGROUND */
+
+        resizeCanvas();
+        createSignals();
+        animateNetwork();
+
+        window.addEventListener("resize", resizeCanvas);
+
+        /* =====================================
+           CRYPTOVAULT LOGIN SESSION
+        ===================================== */
+
+        const API_BASE =
+            window.location.hostname === "127.0.0.1" ||
+                window.location.hostname === "localhost"
                 ? "http://127.0.0.1:8000"
                 : "https://cryptovault-mysv.onrender.com";
 
-        function logout() {
-            localStorage.removeItem("access_token");
-            localStorage.removeItem("username");
-            localStorage.removeItem("email");
-            window.location.replace("index.html");
-        }
+        // CHECK LOGIN SESSION
 
         async function checkSession() {
+
             const token = localStorage.getItem("access_token");
 
             if (!token) {
-                logout();
+                window.location.href = "index.html";
                 return;
             }
 
+            document.getElementById("username").textContent =
+                "Welcome, " +
+                (localStorage.getItem("username") || "User");
+
             try {
+
                 const response = await fetch(`${API_BASE}/me`, {
                     method: "GET",
                     headers: {
@@ -672,45 +780,32 @@
                     }
                 });
 
-                if (response.status === 401 || response.status === 403) {
-                    logout();
-                    return;
-                }
-
                 if (!response.ok) {
-                    document.getElementById("welcomeUser").textContent =
-                        "Unable to verify session. Please try again.";
-                    return;
+                    logout();
                 }
-
-                const username = localStorage.getItem("username") || "User";
-
-                document.getElementById("welcomeUser").textContent =
-                    "Welcome, " + username;
 
             } catch (error) {
-                document.getElementById("welcomeUser").textContent =
-                    "Unable to connect. Check your internet connection.";
+
                 console.error("Session check failed:", error);
+
             }
         }
 
-        function openFeature(page) {
-            window.location.href = page;
-        }
+        // LOGOUT
 
-        function handleCardKey(event, page) {
-            if (event.key === "Enter" || event.key === " ") {
-                event.preventDefault();
-                openFeature(page);
-            }
-        }
+        function logout() {
 
-        document.getElementById("logoutBtn")
-            .addEventListener("click", logout);
+            localStorage.removeItem("access_token");
+            localStorage.removeItem("username");
+            localStorage.removeItem("email");
+
+            window.location.href = "index.html";
+        }
 
         checkSession();
+
     </script>
+
 </body>
 
 </html>
